@@ -1,0 +1,68 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - os: linux
+            arch: amd64
+            artifact_name: gemini-checker-linux-amd64
+          - os: linux
+            arch: arm64
+            artifact_name: gemini-checker-linux-arm64
+          - os: darwin
+            arch: amd64
+            artifact_name: gemini-checker-darwin-amd64
+          - os: darwin
+            arch: arm64
+            artifact_name: gemini-checker-darwin-arm64
+          - os: windows
+            arch: amd64
+            artifact_name: gemini-checker-windows-amd64.exe
+          - os: windows
+            arch: arm64
+            artifact_name: gemini-checker-windows-arm64.exe
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          check-latest: true
+
+      - name: Compile
+        run: |
+          mkdir -p dist
+          CGO_ENABLED=0 GOOS=${{ matrix.os }} GOARCH=${{ matrix.arch }} go build -ldflags="-s -w" -o dist/${{ matrix.artifact_name }} ./cmd/checker
+
+      - name: Compress artifacts (Unix)
+        if: matrix.os != 'windows'
+        run: |
+          cd dist
+          tar -czvf ${{ matrix.artifact_name }}.tar.gz ${{ matrix.artifact_name }}
+          rm ${{ matrix.artifact_name }}
+
+      - name: Compress artifacts (Windows)
+        if: matrix.os == 'windows'
+        run: |
+          cd dist
+          zip ${{ matrix.artifact_name }}.zip ${{ matrix.artifact_name }}
+          rm ${{ matrix.artifact_name }}
+
+      - name: Publish Artifacts to GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.tar.gz
+            dist/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
