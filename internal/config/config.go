@@ -27,7 +27,7 @@ func DefaultConfig() *Config {
 		OutputPath:   "output/gemini.txt",
 		Concurrency:  10,
 		Timeout:      8 * time.Second,
-		SingboxPath:  "sing-box",
+		SingboxPath:  "",
 		RemarkPrefix: "[Gemini]",
 	}
 }
