@@ -41,7 +41,11 @@ func parseVLESS(rawURI string) (*types.ProxyNode, error) {
 	}
 
 	if u.Fragment != "" {
-		remarks, err := url.QueryUnescape(u.Fragment)
+		raw := u.RawFragment
+		if raw == "" {
+			raw = u.Fragment // fallback if not encoded
+		}
+		remarks, err := url.QueryUnescape(raw)
 		if err == nil {
 			node.Remarks = remarks
 		} else {
