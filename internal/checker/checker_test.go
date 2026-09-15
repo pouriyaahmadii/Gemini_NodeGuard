@@ -78,16 +78,20 @@ func TestChecker_CheckAll(t *testing.T) {
 		{ID: "node4", Server: "pass-again"},
 	}
 
-	result := checker.CheckAll(context.Background(), nodes)
+	result, general := checker.CheckAll(context.Background(), nodes)
 
 	if len(result) != 3 {
 		t.Fatalf("expected 3 compatible nodes, got %d", len(result))
 	}
 
-	// Verify filtering: node3 should not be in the result
+	if len(general) != 1 {
+		t.Fatalf("expected 1 general node, got %d", len(general))
+	}
+
+	// Verify filtering: node3 should not be in the compatible result
 	for _, n := range result {
 		if n.ID == "node3" {
-			t.Errorf("node3 should have been filtered out")
+			t.Errorf("node3 should have been filtered out of compatible nodes")
 		}
 	}
 
@@ -101,6 +105,17 @@ func TestChecker_CheckAll(t *testing.T) {
 		if !n.IsGeminiCompatible {
 			t.Errorf("expected node %s to be compatible", n.ID)
 		}
+	}
+
+	// Verify general node
+	if general[0].ID != "node3" {
+		t.Errorf("expected node3 in general nodes, got %s", general[0].ID)
+	}
+	if general[0].IsGeminiCompatible {
+		t.Errorf("expected general node to not be Gemini compatible")
+	}
+	if !general[0].IsAlive {
+		t.Errorf("expected general node to be alive")
 	}
 }
 
@@ -137,7 +152,7 @@ func TestChecker_ContextCancellation(t *testing.T) {
 	}()
 
 	start := time.Now()
-	result := checker.CheckAll(ctx, nodes)
+	result, general := checker.CheckAll(ctx, nodes)
 	duration := time.Since(start)
 
 	if duration > 1*time.Second {
@@ -146,6 +161,10 @@ func TestChecker_ContextCancellation(t *testing.T) {
 
 	if len(result) != 0 {
 		t.Errorf("expected no results due to cancellation, got %d", len(result))
+	}
+
+	if len(general) != 0 {
+		t.Errorf("expected no general results due to cancellation, got %d", len(general))
 	}
 }
 

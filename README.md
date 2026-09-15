@@ -20,15 +20,21 @@ To configure this tool for your private V2Ray subscriptions using GitHub Actions
 The workflow will prioritize this secret over the local `config.json`.
 
 ## Client Subscription
-Once the automated pipeline runs successfully, your curated subscription file will be hosted on the `sub` branch of your repository.
+Once the automated pipeline runs successfully, your curated subscription files will be hosted on the `sub` branch of your repository.
 
-You can subscribe to this permanent raw link in your preferred V2Ray client (like Happ, V2Box, or v2rayN):
+You can subscribe to these permanent raw links in your preferred V2Ray client (like Happ, V2Box, or v2rayN):
 
+**1. Gemini-Compatible Nodes**
+Contains ONLY the verified nodes that work with Google AI (prefixed with `[Gemini]`).
 `https://raw.githubusercontent.com/<USERNAME>/<REPO>/sub/gemini-sub.txt`
+
+**2. General Nodes**
+Contains the remaining working nodes that were geoblocked or gave HTTP 403 to Google AI, but still successfully function as a proxy (prefixed with `[General]`).
+`https://raw.githubusercontent.com/<USERNAME>/<REPO>/sub/general-sub.txt`
 
 *(Replace `<USERNAME>` and `<REPO>` with your GitHub username and repository name)*
 
 ## Automated Scanning
 A built-in GitHub Actions workflow (`.github/workflows/check-and-publish.yml`) runs **every 4 hours** automatically.
 
-During the scan, it checks the connectivity of your subscription nodes and filters out any datacenter or geoblocked IPs that return HTTP 403. This ensures that only 100% working nodes for Google AI (Gemini, AI Studio, NotebookLM) are retained in your published subscription file.
+During the scan, it checks the connectivity of your subscription nodes and tests them against Google AI services. The results are separated into two distinct subscription files as detailed above. Dead nodes that fail to connect entirely are discarded.

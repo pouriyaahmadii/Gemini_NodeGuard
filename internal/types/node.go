@@ -83,6 +83,7 @@ type ProxyNode struct {
 	Reality            RealityConfig   `json:"reality,omitempty"`
 	Transport          TransportConfig `json:"transport,omitempty"`
 	RawURI             string          `json:"raw_uri"`
+	IsAlive            bool            `json:"is_alive"`
 	IsGeminiCompatible bool            `json:"is_gemini_compatible"`
 	Latency            time.Duration   `json:"latency"`
 }
