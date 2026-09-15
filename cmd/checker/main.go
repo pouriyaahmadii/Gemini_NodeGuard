@@ -117,7 +117,12 @@ func main() {
 		Timeout:     cfg.Timeout,
 	}
 
-	dialer, err := checker.NewSingboxBinaryDialer(cfg.SingboxPath)
+	resolvedSingboxPath, err := checker.ResolveSingbox(cfg.SingboxPath)
+	if err != nil {
+		log.Printf("Warning: Failed to resolve sing-box binary: %v", err)
+	}
+
+	dialer, err := checker.NewSingboxBinaryDialer(resolvedSingboxPath)
 	if err != nil {
 		log.Printf("Warning: Failed to initialize sing-box dialer: %v", err)
 		log.Println("Node connectivity checks might fail if sing-box is not properly installed.")
