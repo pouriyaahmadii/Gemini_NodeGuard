@@ -23,7 +23,7 @@ type Config struct {
 func DefaultConfig() *Config {
 	return &Config{
 		SubURLs:      []string{},
-		TargetURLs:   []string{"https://gemini.google.com"},
+		TargetURLs:   []string{"https://jules.google.com", "https://gemini.google.com", "https://generativelanguage.googleapis.com/v1beta/models"},
 		OutputPath:   "output/gemini.txt",
 		Concurrency:  10,
 		Timeout:      8 * time.Second,

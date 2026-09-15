@@ -22,7 +22,9 @@ func DefaultCheckOptions() CheckOptions {
 		Concurrency: 10,
 		Timeout:     8 * time.Second,
 		TargetURLs: []string{
+			"https://jules.google.com",
 			"https://gemini.google.com",
+			"https://generativelanguage.googleapis.com/v1beta/models",
 		},
 	}
 }
@@ -42,7 +44,11 @@ func NewChecker(opts CheckOptions, dialer NodeDialer) *Checker {
 		opts.Timeout = 8 * time.Second
 	}
 	if len(opts.TargetURLs) == 0 {
-		opts.TargetURLs = []string{"https://gemini.google.com"}
+		opts.TargetURLs = []string{
+			"https://jules.google.com",
+			"https://gemini.google.com",
+			"https://generativelanguage.googleapis.com/v1beta/models",
+		}
 	}
 	return &Checker{
 		options: opts,
