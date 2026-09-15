@@ -10,6 +10,7 @@ import (
 // Config represents the application configuration.
 type Config struct {
 	SubURLs      []string      `json:"sub_urls"`
+	TargetURLs   []string      `json:"target_urls"`
 	OutputPath   string        `json:"output_path"`
 	Concurrency  int           `json:"concurrency"`
 	Timeout      time.Duration `json:"-"`
@@ -22,6 +23,7 @@ type Config struct {
 func DefaultConfig() *Config {
 	return &Config{
 		SubURLs:      []string{},
+		TargetURLs:   []string{"https://gemini.google.com"},
 		OutputPath:   "output/gemini.txt",
 		Concurrency:  10,
 		Timeout:      8 * time.Second,

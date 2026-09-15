@@ -14,14 +14,30 @@ func TestProbe(t *testing.T) {
 	tests := []struct {
 		name       string
 		statusCode int
+		body       string
 		delay      time.Duration
 		wantPass   bool
 		wantAlive  bool
 	}{
 		{
-			name:       "Simulated 200 OK",
+			name:       "Simulated 200 OK without geoblock",
 			statusCode: http.StatusOK,
+			body:       "<html><body>Welcome to Google</body></html>",
 			wantPass:   true,
+			wantAlive:  true,
+		},
+		{
+			name:       "Simulated 200 OK with geoblock (isn't currently supported in your country)",
+			statusCode: http.StatusOK,
+			body:       "<html><body>Gemini isn't currently supported in your country</body></html>",
+			wantPass:   false,
+			wantAlive:  true,
+		},
+		{
+			name:       "Simulated 200 OK with geoblock (not yet available in your region) - case insensitive",
+			statusCode: http.StatusOK,
+			body:       "<html><body>Jules is NOT YET AVAILABLE IN YOUR REGION.</body></html>",
+			wantPass:   false,
 			wantAlive:  true,
 		},
 		{
@@ -57,10 +73,16 @@ func TestProbe(t *testing.T) {
 				if r.Header.Get("User-Agent") == "" {
 					t.Errorf("expected User-Agent header to be set")
 				}
+				if r.Header.Get("Accept") == "" {
+					t.Errorf("expected Accept header to be set")
+				}
 				if tt.delay > 0 {
 					time.Sleep(tt.delay)
 				}
 				w.WriteHeader(tt.statusCode)
+				if tt.body != "" {
+					w.Write([]byte(tt.body))
+				}
 			}))
 			defer server.Close()
 

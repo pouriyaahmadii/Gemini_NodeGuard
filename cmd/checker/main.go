@@ -23,6 +23,7 @@ func main() {
 	var (
 		configPath  string
 		subURLs     string
+		targetURLs  string
 		outputPath  string
 		concurrency int
 		timeoutStr  string
@@ -32,6 +33,7 @@ func main() {
 
 	flag.StringVar(&configPath, "config", "", "Path to config JSON file")
 	flag.StringVar(&subURLs, "sub", "", "Comma-separated subscription URLs")
+	flag.StringVar(&targetURLs, "targets", "", "Comma-separated target URLs to test")
 	flag.StringVar(&outputPath, "out", "", "Output file path")
 	flag.IntVar(&concurrency, "concurrency", 0, "Integer worker count")
 	flag.StringVar(&timeoutStr, "timeout", "", "Timeout duration (e.g. 8s)")
@@ -54,6 +56,9 @@ func main() {
 	// Override with CLI flags
 	if subURLs != "" {
 		cfg.SubURLs = append(cfg.SubURLs, strings.Split(subURLs, ",")...)
+	}
+	if targetURLs != "" {
+		cfg.TargetURLs = strings.Split(targetURLs, ",")
 	}
 	if outputPath != "" {
 		cfg.OutputPath = outputPath
@@ -124,6 +129,7 @@ func main() {
 	checkOpts := checker.CheckOptions{
 		Concurrency: cfg.Concurrency,
 		Timeout:     cfg.Timeout,
+		TargetURLs:  cfg.TargetURLs,
 	}
 
 	resolvedSingboxPath, err := checker.ResolveSingbox(cfg.SingboxPath)
