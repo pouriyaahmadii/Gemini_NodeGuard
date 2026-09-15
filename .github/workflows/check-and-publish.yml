@@ -1,0 +1,63 @@
+name: Check and Publish Subscriptions
+
+on:
+  schedule:
+    - cron: "0 */4 * * *"
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'config.json'
+
+permissions:
+  contents: write
+
+jobs:
+  check-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Install sing-box
+        run: |
+          LATEST_URL=$(curl -s https://api.github.com/repos/SagerNet/sing-box/releases/latest | grep -o '"browser_download_url": "[^"]*linux-amd64\.tar\.gz"' | cut -d '"' -f 4 | head -n 1)
+          if [ -z "$LATEST_URL" ]; then
+            echo "Failed to fetch sing-box download URL"
+            exit 1
+          fi
+          wget -q -O sing-box.tar.gz "$LATEST_URL"
+          tar -xzf sing-box.tar.gz
+          sudo cp sing-box-*/sing-box /usr/local/bin/
+          sudo chmod +x /usr/local/bin/sing-box
+          sing-box version
+
+      - name: Build checker
+        run: go build -v -o gemini-checker ./cmd/checker
+
+      - name: Run checker
+        env:
+          SUB_URLS: ${{ secrets.SUB_URLS }}
+        run: |
+          mkdir -p output
+          if [ -n "$SUB_URLS" ]; then
+            echo "Using SUB_URLS from secrets"
+            ./gemini-checker -sub "$SUB_URLS" -out output/gemini-sub.txt
+          else
+            echo "SUB_URLS secret not found, using config.json"
+            ./gemini-checker -config config.json -out output/gemini-sub.txt
+          fi
+
+      - name: Deploy to sub branch
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: sub
+          publish_dir: ./output
+          force_orphan: true
