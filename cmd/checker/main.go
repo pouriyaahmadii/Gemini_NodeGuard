@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"gemini-sub-checker/internal/banner"
 	"gemini-sub-checker/internal/checker"
 	"gemini-sub-checker/internal/config"
 	"gemini-sub-checker/internal/exporter"
@@ -26,6 +27,7 @@ func main() {
 		concurrency int
 		timeoutStr  string
 		singboxPath string
+		silent      bool
 	)
 
 	flag.StringVar(&configPath, "config", "", "Path to config JSON file")
@@ -34,7 +36,14 @@ func main() {
 	flag.IntVar(&concurrency, "concurrency", 0, "Integer worker count")
 	flag.StringVar(&timeoutStr, "timeout", "", "Timeout duration (e.g. 8s)")
 	flag.StringVar(&singboxPath, "singbox", "", "Path to sing-box binary")
+	flag.BoolVar(&silent, "silent", false, "Suppress banner and print only essential logs")
+	flag.BoolVar(&silent, "quiet", false, "Suppress banner and print only essential logs (alias for -silent)")
 	flag.Parse()
+
+	// Print banner unless silent flag is true
+	if !silent {
+		banner.PrintBanner()
+	}
 
 	// Load configuration
 	cfg, err := config.LoadConfig(configPath)
