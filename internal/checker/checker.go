@@ -118,13 +118,12 @@ func (c *Checker) processNode(ctx context.Context, node *types.ProxyNode) {
 		defer cleanup()
 	}
 
-	// In the real case, maybe we probe multiple URLs until success.
-	// We'll test against the first target URL for compatibility.
-	// If it fails, maybe try others? Requirements don't strictly define fallback logic,
-	// so we'll just test all target URLs or until one passes.
+	// Test against all target URLs for compatibility.
+	// The node is considered Gemini compatible only if it passes all target URLs.
+	node.IsGeminiCompatible = true
 	for _, url := range c.options.TargetURLs {
 		Probe(probeCtx, client, node, url)
-		if node.IsGeminiCompatible {
+		if !node.IsGeminiCompatible {
 			break
 		}
 	}
