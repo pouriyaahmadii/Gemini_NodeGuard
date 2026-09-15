@@ -32,9 +32,11 @@ jobs:
           echo "Downloading sing-box from $DOWNLOAD_URL"
           wget -q -O sing-box.tar.gz "$DOWNLOAD_URL"
           tar -xzf sing-box.tar.gz
-          sudo cp sing-box-*/sing-box /usr/local/bin/
+          sudo cp sing-box-*/sing-box /usr/local/bin/sing-box
+          cp sing-box-*/sing-box ./sing-box
           sudo chmod +x /usr/local/bin/sing-box
-          sing-box version
+          chmod +x ./sing-box
+          ./sing-box version
 
       - name: Build checker
         run: go build -v -o gemini-checker ./cmd/checker
@@ -46,10 +48,10 @@ jobs:
           mkdir -p output
           if [ -n "$SUB_URLS" ]; then
             echo "Using SUB_URLS from secrets"
-            ./gemini-checker -sub "$SUB_URLS"
+            ./gemini-checker -sub "$SUB_URLS" -singbox ./sing-box
           else
             echo "SUB_URLS secret not found, using config.json"
-            ./gemini-checker -config config.json
+            ./gemini-checker -config config.json -singbox ./sing-box
           fi
 
       - name: Deploy to sub branch
