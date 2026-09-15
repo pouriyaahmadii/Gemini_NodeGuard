@@ -25,10 +25,13 @@ type SingboxBinaryDialer struct {
 }
 
 // NewSingboxBinaryDialer creates a new SingboxBinaryDialer.
-func NewSingboxBinaryDialer() (*SingboxBinaryDialer, error) {
-	path, err := exec.LookPath("sing-box")
+func NewSingboxBinaryDialer(binaryPath string) (*SingboxBinaryDialer, error) {
+	if binaryPath == "" {
+		binaryPath = "sing-box"
+	}
+	path, err := exec.LookPath(binaryPath)
 	if err != nil {
-		return nil, fmt.Errorf("sing-box binary not found in PATH: %w", err)
+		return nil, fmt.Errorf("sing-box binary '%s' not found: %w", binaryPath, err)
 	}
 	return &SingboxBinaryDialer{binaryPath: path}, nil
 }
