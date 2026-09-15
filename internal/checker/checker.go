@@ -51,8 +51,8 @@ func NewChecker(opts CheckOptions, dialer NodeDialer) *Checker {
 }
 
 // CheckAll executes the checking process across all provided nodes,
-// and returns a filtered and sorted slice of compatible nodes.
-func (c *Checker) CheckAll(ctx context.Context, nodes []*types.ProxyNode) []*types.ProxyNode {
+// and returns filtered and sorted slices of Gemini compatible and general nodes.
+func (c *Checker) CheckAll(ctx context.Context, nodes []*types.ProxyNode) ([]*types.ProxyNode, []*types.ProxyNode) {
 	workQueue := make(chan *types.ProxyNode, len(nodes))
 	var wg sync.WaitGroup
 
@@ -85,9 +85,12 @@ func (c *Checker) CheckAll(ctx context.Context, nodes []*types.ProxyNode) []*typ
 
 	// Filter and sort results
 	var compatible []*types.ProxyNode
+	var general []*types.ProxyNode
 	for _, n := range nodes {
 		if n.IsGeminiCompatible {
 			compatible = append(compatible, n)
+		} else if n.IsAlive {
+			general = append(general, n)
 		}
 	}
 
@@ -95,7 +98,11 @@ func (c *Checker) CheckAll(ctx context.Context, nodes []*types.ProxyNode) []*typ
 		return compatible[i].Latency < compatible[j].Latency
 	})
 
-	return compatible
+	sort.SliceStable(general, func(i, j int) bool {
+		return general[i].Latency < general[j].Latency
+	})
+
+	return compatible, general
 }
 
 func (c *Checker) processNode(ctx context.Context, node *types.ProxyNode) {

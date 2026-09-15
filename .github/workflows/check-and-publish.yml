@@ -48,10 +48,10 @@ jobs:
           mkdir -p output
           if [ -n "$SUB_URLS" ]; then
             echo "Using SUB_URLS from secrets"
-            ./gemini-checker -sub "$SUB_URLS" -out output/gemini-sub.txt
+            ./gemini-checker -sub "$SUB_URLS"
           else
             echo "SUB_URLS secret not found, using config.json"
-            ./gemini-checker -config config.json -out output/gemini-sub.txt
+            ./gemini-checker -config config.json
           fi
 
       - name: Deploy to sub branch

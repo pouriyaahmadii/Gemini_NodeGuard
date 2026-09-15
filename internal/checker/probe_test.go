@@ -16,32 +16,38 @@ func TestProbe(t *testing.T) {
 		statusCode int
 		delay      time.Duration
 		wantPass   bool
+		wantAlive  bool
 	}{
 		{
 			name:       "Simulated 200 OK",
 			statusCode: http.StatusOK,
 			wantPass:   true,
+			wantAlive:  true,
 		},
 		{
 			name:       "Simulated 302 Found",
 			statusCode: http.StatusFound,
 			wantPass:   true,
+			wantAlive:  true,
 		},
 		{
 			name:       "Simulated 403 Forbidden",
 			statusCode: http.StatusForbidden,
 			wantPass:   false,
+			wantAlive:  true,
 		},
 		{
 			name:       "Simulated 500 Server Error",
 			statusCode: http.StatusInternalServerError,
 			wantPass:   false,
+			wantAlive:  true,
 		},
 		{
 			name:       "Timeout / Slow Server Response",
 			statusCode: http.StatusOK,
 			delay:      200 * time.Millisecond,
 			wantPass:   false, // We will use a smaller context timeout for this test
+			wantAlive:  false,
 		},
 	}
 
@@ -76,7 +82,11 @@ func TestProbe(t *testing.T) {
 			Probe(ctx, client, node, server.URL)
 
 			if node.IsGeminiCompatible != tt.wantPass {
-				t.Errorf("Probe() = %v, want %v", node.IsGeminiCompatible, tt.wantPass)
+				t.Errorf("Probe() IsGeminiCompatible = %v, want %v", node.IsGeminiCompatible, tt.wantPass)
+			}
+
+			if node.IsAlive != tt.wantAlive {
+				t.Errorf("Probe() IsAlive = %v, want %v", node.IsAlive, tt.wantAlive)
 			}
 
 			if node.Latency <= 0 {

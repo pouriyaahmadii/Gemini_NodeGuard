@@ -28,19 +28,20 @@ func Probe(ctx context.Context, client *http.Client, node *types.ProxyNode, targ
 
 	if err != nil {
 		// Network reset, TLS failure, timeout, etc.
+		node.IsAlive = false
 		node.IsGeminiCompatible = false
 		return
 	}
 	defer resp.Body.Close()
 
+	// We got an HTTP response, meaning proxy transport works
+	node.IsAlive = true
+
 	// Check response status
 	if resp.StatusCode == http.StatusOK || (resp.StatusCode >= 300 && resp.StatusCode < 400) {
 		node.IsGeminiCompatible = true
-	} else if resp.StatusCode == http.StatusForbidden {
-		// 403 indicates geoblock or IP block
-		node.IsGeminiCompatible = false
 	} else {
-		// Treat other unexpected codes (e.g., 500) as failures for compatibility
+		// 403 (geoblock), 500, etc.
 		node.IsGeminiCompatible = false
 	}
 }
