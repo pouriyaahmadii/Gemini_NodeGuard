@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"gemini-sub-checker/internal/types"
@@ -58,27 +59,55 @@ func Probe(ctx context.Context, client *http.Client, node *types.ProxyNode, targ
 	// We got an HTTP response, meaning proxy transport works
 	node.IsAlive = true
 
+	// High-performance body inspection
+	buf := make([]byte, 256*1024)
+	n, readErr := io.ReadFull(io.LimitReader(resp.Body, 256*1024), buf)
+	if readErr != nil && readErr != io.ErrUnexpectedEOF && readErr != io.EOF {
+		// Read error, might be a broken connection during transfer
+		node.IsGeminiCompatible = false
+		log.Printf("[Probe] %s: read body error from %s: %v", node.Server, targetURL, readErr)
+		return
+	}
+	bodyBuf := bytes.ToLower(buf[:n])
+
+	isAPI := strings.Contains(targetURL, "generativelanguage.googleapis.com")
+
+	if isAPI {
+		// For API endpoints, check for HTTP >= 400 with specific body content
+		if resp.StatusCode >= 400 {
+			if bytes.Contains(bodyBuf, []byte("invalid_argument")) || bytes.Contains(bodyBuf, []byte("api key not valid")) {
+				// Positive confirmation that API is reachable
+				// Check for geoblock keywords
+				for _, kw := range geoblockKeywords {
+					if bytes.Contains(bodyBuf, kw) {
+						node.IsGeminiCompatible = false
+						log.Printf("[Probe] %s: API endpoint returned geoblocked keyword for %s", node.Server, targetURL)
+						return
+					}
+				}
+				node.IsGeminiCompatible = true
+				return
+			}
+		} else if resp.StatusCode == http.StatusOK {
+			node.IsGeminiCompatible = true
+			return
+		}
+
+		node.IsGeminiCompatible = false
+		log.Printf("[Probe] %s: API endpoint incompatible due to status code %d and body from %s", node.Server, resp.StatusCode, targetURL)
+		return
+	}
+
+	// For web endpoints (gemini.google.com, jules.google.com)
 	// If the status is forbidden, too many requests or server error, assume incompatible
 	if resp.StatusCode == http.StatusForbidden || resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode >= 500 {
 		node.IsGeminiCompatible = false
-		log.Printf("[Probe] %s: incompatible due to status code %d from %s", node.Server, resp.StatusCode, targetURL)
+		log.Printf("[Probe] %s: web endpoint incompatible due to status code %d from %s", node.Server, resp.StatusCode, targetURL)
 		return
 	}
 
 	// For web UI endpoints, check response status for 200 OK or redirect
 	if resp.StatusCode == http.StatusOK || (resp.StatusCode >= 300 && resp.StatusCode < 400) {
-		// High-performance body inspection
-		buf := make([]byte, 256*1024)
-		n, err := io.ReadFull(io.LimitReader(resp.Body, 256*1024), buf)
-		if err != nil && err != io.ErrUnexpectedEOF && err != io.EOF {
-			// Read error, might be a broken connection during transfer
-			node.IsGeminiCompatible = false
-			log.Printf("[Probe] %s: read body error from %s: %v", node.Server, targetURL, err)
-			return
-		}
-
-		bodyBuf := bytes.ToLower(buf[:n])
-
 		for _, kw := range geoblockKeywords {
 			if bytes.Contains(bodyBuf, kw) {
 				node.IsGeminiCompatible = false
@@ -86,7 +115,6 @@ func Probe(ctx context.Context, client *http.Client, node *types.ProxyNode, targ
 				return
 			}
 		}
-
 		node.IsGeminiCompatible = true
 	} else {
 		node.IsGeminiCompatible = false

@@ -144,6 +144,9 @@ func (d *SingboxBinaryDialer) NewHTTPClient(ctx context.Context, node *types.Pro
 			TLSHandshakeTimeout:   5 * time.Second,
 			ResponseHeaderTimeout: 6 * time.Second,
 		},
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
 	}
 
 	return client, cleanup, nil
@@ -277,6 +280,9 @@ func (d *XrayBinaryDialer) NewHTTPClient(ctx context.Context, node *types.ProxyN
 			TLSHandshakeTimeout:   5 * time.Second,
 			ResponseHeaderTimeout: 6 * time.Second,
 		},
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
 	}
 
 	return client, cleanup, nil
@@ -290,7 +296,18 @@ type MockDialer struct {
 // NewHTTPClient returns the mocked client.
 func (d *MockDialer) NewHTTPClient(ctx context.Context, node *types.ProxyNode) (*http.Client, func(), error) {
 	if d.Client == nil {
-		return http.DefaultClient, func() {}, nil
+		client := &http.Client{
+			CheckRedirect: func(req *http.Request, via []*http.Request) error {
+				return http.ErrUseLastResponse
+			},
+		}
+		return client, func() {}, nil
+	}
+	// Make sure the mock client also stops on redirects if needed
+	if d.Client.CheckRedirect == nil {
+		d.Client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		}
 	}
 	return d.Client, func() {}, nil
 }
