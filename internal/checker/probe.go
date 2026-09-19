@@ -75,7 +75,7 @@ func Probe(ctx context.Context, client *http.Client, node *types.ProxyNode, targ
 	if isAPI {
 		// For API endpoints, check for HTTP >= 400 with specific body content
 		if resp.StatusCode >= 400 {
-			if bytes.Contains(bodyBuf, []byte("invalid_argument")) || bytes.Contains(bodyBuf, []byte("api key not valid")) {
+			if bytes.Contains(bodyBuf, []byte("invalid_argument")) || bytes.Contains(bodyBuf, []byte("api key not valid")) || bytes.Contains(bodyBuf, []byte("permission_denied")) || bytes.Contains(bodyBuf, []byte("method doesn't allow unregistered callers")) {
 				// Positive confirmation that API is reachable
 				// Check for geoblock keywords
 				for _, kw := range geoblockKeywords {
