@@ -24,7 +24,6 @@ func DefaultCheckOptions() CheckOptions {
 		TargetURLs: []string{
 			"https://jules.google.com",
 			"https://gemini.google.com",
-			"https://generativelanguage.googleapis.com/v1beta/models",
 		},
 	}
 }
@@ -47,7 +46,6 @@ func NewChecker(opts CheckOptions, dialer NodeDialer) *Checker {
 		opts.TargetURLs = []string{
 			"https://jules.google.com",
 			"https://gemini.google.com",
-			"https://generativelanguage.googleapis.com/v1beta/models",
 		}
 	}
 	return &Checker{

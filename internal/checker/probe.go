@@ -5,7 +5,6 @@ import (
 	"context"
 	"io"
 	"net/http"
-	"strings"
 	"time"
 
 	"gemini-sub-checker/internal/types"
@@ -58,18 +57,14 @@ func Probe(ctx context.Context, client *http.Client, node *types.ProxyNode, targ
 	// We got an HTTP response, meaning proxy transport works
 	node.IsAlive = true
 
-	isAPIEndpoint := strings.Contains(targetURL, "generativelanguage.googleapis.com")
-
-	if !isAPIEndpoint {
-		if resp.StatusCode == http.StatusForbidden || resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode >= 500 {
-			node.IsGeminiCompatible = false
-			return
-		}
+	// If the status is forbidden, too many requests or server error, assume incompatible
+	if resp.StatusCode == http.StatusForbidden || resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode >= 500 {
+		node.IsGeminiCompatible = false
+		return
 	}
 
 	// For web UI endpoints, check response status for 200 OK or redirect
-	// For API endpoint, read body even on 400 errors
-	if (resp.StatusCode == http.StatusOK || (resp.StatusCode >= 300 && resp.StatusCode < 400)) || (isAPIEndpoint && resp.StatusCode >= 400) {
+	if resp.StatusCode == http.StatusOK || (resp.StatusCode >= 300 && resp.StatusCode < 400) {
 		// High-performance body inspection
 		buf := make([]byte, 256*1024)
 		n, err := io.ReadFull(io.LimitReader(resp.Body, 256*1024), buf)
@@ -86,29 +81,6 @@ func Probe(ctx context.Context, client *http.Client, node *types.ProxyNode, targ
 				node.IsGeminiCompatible = false
 				return
 			}
-		}
-
-		if isAPIEndpoint && resp.StatusCode >= 400 {
-			// Check for positive confirmation of accepted location (e.g., missing API key)
-			if bytes.Contains(bodyBuf, []byte("api key not valid")) ||
-				bytes.Contains(bodyBuf, []byte("invalid_argument")) ||
-				bytes.Contains(bodyBuf, []byte("unauthenticated")) ||
-				bytes.Contains(bodyBuf, []byte("permission_denied")) ||
-				bytes.Contains(bodyBuf, []byte("unregistered callers")) {
-				node.IsGeminiCompatible = true
-				return
-			}
-
-			// If we got a 400+ on the API endpoint and it wasn't a confirmed accepted location,
-			// or a known geoblock (which is caught earlier), then it's some other error (like 500, 502, 503).
-			// We should fail it to be safe.
-			node.IsGeminiCompatible = false
-			return
-		}
-
-		if resp.StatusCode >= 400 {
-			node.IsGeminiCompatible = false
-			return
 		}
 
 		node.IsGeminiCompatible = true

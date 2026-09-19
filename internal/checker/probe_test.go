@@ -65,20 +65,6 @@ func TestProbe(t *testing.T) {
 			wantPass:   false, // We will use a smaller context timeout for this test
 			wantAlive:  false,
 		},
-		{
-			name:       "Google API Endpoint - Missing API Key (400 Bad Request, No Geoblock)",
-			statusCode: http.StatusBadRequest,
-			body:       `{"error": {"code": 400, "message": "API key not valid. Please pass a valid API key.", "status": "INVALID_ARGUMENT"}}`,
-			wantPass:   true,
-			wantAlive:  true,
-		},
-		{
-			name:       "Google API Endpoint - Geoblocked (400 Bad Request, FAILED_PRECONDITION)",
-			statusCode: http.StatusBadRequest,
-			body:       `{"error": {"code": 400, "message": "User location is not supported for the API use.", "status": "FAILED_PRECONDITION"}}`,
-			wantPass:   false,
-			wantAlive:  true,
-		},
 	}
 
 	for _, tt := range tests {
@@ -116,9 +102,6 @@ func TestProbe(t *testing.T) {
 			}
 
 			targetURL := server.URL
-			if tt.name == "Google API Endpoint - Missing API Key (400 Bad Request, No Geoblock)" || tt.name == "Google API Endpoint - Geoblocked (400 Bad Request, FAILED_PRECONDITION)" {
-				targetURL = server.URL + "/v1beta/models?target=generativelanguage.googleapis.com"
-			}
 
 			Probe(ctx, client, node, targetURL)
 
