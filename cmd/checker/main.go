@@ -11,12 +11,12 @@ import (
 	"syscall"
 	"time"
 
-	"gemini-sub-checker/internal/banner"
-	"gemini-sub-checker/internal/checker"
-	"gemini-sub-checker/internal/config"
-	"gemini-sub-checker/internal/exporter"
-	"gemini-sub-checker/internal/fetcher"
-	"gemini-sub-checker/internal/parser"
+	"gemini-nodeguard/internal/banner"
+	"gemini-nodeguard/internal/checker"
+	"gemini-nodeguard/internal/config"
+	"gemini-nodeguard/internal/exporter"
+	"gemini-nodeguard/internal/fetcher"
+	"gemini-nodeguard/internal/parser"
 )
 
 func main() {
@@ -87,7 +87,7 @@ func main() {
 		log.Fatal("No subscription URLs provided. Use -sub or specify in config.")
 	}
 
-	log.Printf("Starting Gemini Sub Checker")
+	log.Printf("Starting Gemini NodeGuard")
 	log.Printf("Concurrency: %d, Timeout: %s, Output: %s", cfg.Concurrency, cfg.Timeout, cfg.OutputPath)
 
 	ctx, cancel := context.WithCancel(context.Background())

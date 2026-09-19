@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"gemini-sub-checker/internal/parser"
-	"gemini-sub-checker/internal/types"
+	"gemini-nodeguard/internal/parser"
+	"gemini-nodeguard/internal/types"
 )
 
 func TestExportVMess(t *testing.T) {

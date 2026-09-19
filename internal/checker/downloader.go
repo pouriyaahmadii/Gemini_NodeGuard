@@ -42,7 +42,7 @@ func ResolveSingbox(customPath string) (string, error) {
 		return "", fmt.Errorf("failed to get user home directory: %w", err)
 	}
 
-	cacheDir := filepath.Join(homeDir, ".gemini-sub-checker", "bin")
+	cacheDir := filepath.Join(homeDir, ".gemini-nodeguard", "bin")
 	cachedPath := filepath.Join(cacheDir, binaryName)
 
 	if _, err := os.Stat(cachedPath); err == nil {
@@ -89,7 +89,7 @@ func ResolveXray(customPath string) (string, error) {
 		return "", fmt.Errorf("failed to get user home directory: %w", err)
 	}
 
-	cacheDir := filepath.Join(homeDir, ".gemini-sub-checker", "bin")
+	cacheDir := filepath.Join(homeDir, ".gemini-nodeguard", "bin")
 	cachedPath := filepath.Join(cacheDir, binaryName)
 
 	if _, err := os.Stat(cachedPath); err == nil {

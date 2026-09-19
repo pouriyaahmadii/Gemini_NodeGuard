@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"gemini-sub-checker/internal/types"
+	"gemini-nodeguard/internal/types"
 )
 
 // parseTrojan parses a trojan:// URI string into a ProxyNode.

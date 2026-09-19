@@ -2,7 +2,7 @@ package checker
 
 import (
 	"context"
-	"gemini-sub-checker/internal/types"
+	"gemini-nodeguard/internal/types"
 	"net/http"
 	"testing"
 )

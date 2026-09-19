@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"gemini-sub-checker/internal/types"
+	"gemini-nodeguard/internal/types"
 )
 
 // CheckOptions configures the behavior of the checker pool.

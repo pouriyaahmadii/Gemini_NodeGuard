@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"gemini-sub-checker/internal/types"
+	"gemini-nodeguard/internal/types"
 )
 
 // parseVLESS parses a vless:// URI string into a ProxyNode.

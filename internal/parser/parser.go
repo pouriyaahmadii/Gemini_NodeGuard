@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"gemini-sub-checker/internal/types"
+	"gemini-nodeguard/internal/types"
 )
 
 // ParseURI detects the scheme prefix and routes to the appropriate protocol parser.

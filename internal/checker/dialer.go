@@ -11,7 +11,7 @@ import (
 	"os/exec"
 	"time"
 
-	"gemini-sub-checker/internal/types"
+	"gemini-nodeguard/internal/types"
 )
 
 // NodeDialer interface allows HTTP traffic to be routed through a proxy node.

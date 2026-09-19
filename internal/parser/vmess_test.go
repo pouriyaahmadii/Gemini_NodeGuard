@@ -4,7 +4,7 @@ import (
 	"encoding/base64"
 	"testing"
 
-	"gemini-sub-checker/internal/types"
+	"gemini-nodeguard/internal/types"
 )
 
 func TestParseVMess(t *testing.T) {

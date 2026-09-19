@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"gemini-sub-checker/internal/types"
+	"gemini-nodeguard/internal/types"
 )
 
 // ExportOptions holds options for exporting nodes.

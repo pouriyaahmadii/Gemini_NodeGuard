@@ -2,7 +2,7 @@ package checker
 
 import (
 	"fmt"
-	"gemini-sub-checker/internal/types"
+	"gemini-nodeguard/internal/types"
 )
 
 // BuildSingboxOutbound generates a sing-box outbound configuration map from a ProxyNode.

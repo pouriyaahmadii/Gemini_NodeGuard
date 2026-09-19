@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"gemini-sub-checker/internal/checker"
-	"gemini-sub-checker/internal/types"
+	"gemini-nodeguard/internal/checker"
+	"gemini-nodeguard/internal/types"
 )
 
 func main() {

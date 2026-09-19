@@ -3,7 +3,7 @@ package parser
 import (
 	"testing"
 
-	"gemini-sub-checker/internal/types"
+	"gemini-nodeguard/internal/types"
 )
 
 func TestParseVLESS(t *testing.T) {

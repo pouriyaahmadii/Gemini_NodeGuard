@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"gemini-sub-checker/internal/types"
+	"gemini-nodeguard/internal/types"
 )
 
 func TestProbe(t *testing.T) {

@@ -1,3 +1,3 @@
-module gemini-sub-checker
+module gemini-nodeguard
 
 go 1.23.0

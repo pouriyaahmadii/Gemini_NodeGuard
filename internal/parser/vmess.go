@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"gemini-sub-checker/internal/types"
+	"gemini-nodeguard/internal/types"
 )
 
 // vmessJSON represents the JSON structure in a vmess URI payload.

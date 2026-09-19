@@ -1,7 +1,7 @@
 package checker
 
 import (
-	"gemini-sub-checker/internal/types"
+	"gemini-nodeguard/internal/types"
 	"reflect"
 	"testing"
 )

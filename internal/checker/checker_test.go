@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"gemini-sub-checker/internal/types"
+	"gemini-nodeguard/internal/types"
 )
 
 // customMockDialer returns a specific http.Client based on the node's server name.

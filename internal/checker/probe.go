@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"gemini-sub-checker/internal/types"
+	"gemini-nodeguard/internal/types"
 )
 
 var geoblockKeywords = [][]byte{
