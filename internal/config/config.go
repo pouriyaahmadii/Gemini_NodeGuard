@@ -16,6 +16,7 @@ type Config struct {
 	Timeout      time.Duration `json:"-"`
 	TimeoutStr   string        `json:"timeout"`
 	SingboxPath  string        `json:"singbox_path"`
+	XrayPath     string        `json:"xray_path"`
 	RemarkPrefix string        `json:"remark_prefix"`
 }
 
@@ -28,6 +29,7 @@ func DefaultConfig() *Config {
 		Concurrency:  10,
 		Timeout:      8 * time.Second,
 		SingboxPath:  "",
+		XrayPath:     "",
 		RemarkPrefix: "[Gemini]",
 	}
 }

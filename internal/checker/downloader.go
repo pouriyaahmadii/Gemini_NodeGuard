@@ -63,8 +63,139 @@ func ResolveSingbox(customPath string) (string, error) {
 	log.Printf("sing-box downloaded successfully to %s", cachedPath)
 	return cachedPath, nil
 }
+// ResolveXray resolves the path to the xray binary, downloading it if necessary.
+func ResolveXray(customPath string) (string, error) {
+	// 1. Custom flag path
+	if customPath != "" {
+		if _, err := os.Stat(customPath); err == nil {
+			return customPath, nil
+		}
+		return "", fmt.Errorf("custom xray path specified but not found: %s", customPath)
+	}
 
-// GenerateDownloadURL constructs the GitHub release URL for sing-box.
+	// 2. System $PATH
+	binaryName := "xray"
+	if runtime.GOOS == "windows" {
+		binaryName = "xray.exe"
+	}
+
+	if path, err := exec.LookPath(binaryName); err == nil {
+		return path, nil
+	}
+
+	// 3. Local cache directory
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return "", fmt.Errorf("failed to get user home directory: %w", err)
+	}
+
+	cacheDir := filepath.Join(homeDir, ".gemini-sub-checker", "bin")
+	cachedPath := filepath.Join(cacheDir, binaryName)
+
+	if _, err := os.Stat(cachedPath); err == nil {
+		return cachedPath, nil
+	}
+
+	// 4. Auto-download to the local cache
+	log.Printf("xray not found. Downloading for %s/%s...", runtime.GOOS, runtime.GOARCH)
+
+	if err := os.MkdirAll(cacheDir, 0755); err != nil {
+		return "", fmt.Errorf("failed to create cache directory: %w", err)
+	}
+
+	// You can specify a default version for Xray
+	const DefaultXrayVersion = "1.8.24"
+	if err := downloadXray(cachedPath, DefaultXrayVersion, runtime.GOOS, runtime.GOARCH); err != nil {
+		return "", fmt.Errorf("failed to download xray: %w", err)
+	}
+
+	log.Printf("xray downloaded successfully to %s", cachedPath)
+	return cachedPath, nil
+}
+
+// GenerateXrayDownloadURL constructs the GitHub release URL for xray.
+func GenerateXrayDownloadURL(version, goos, goarch string) string {
+	var archiveName string
+
+	// Xray releases are usually .zip for all platforms
+	switch goos {
+	case "linux":
+		if goarch == "amd64" {
+			archiveName = fmt.Sprintf("Xray-linux-64.zip")
+		} else if goarch == "arm64" {
+			archiveName = fmt.Sprintf("Xray-linux-arm64-v8a.zip")
+		}
+	case "darwin":
+		if goarch == "amd64" {
+			archiveName = fmt.Sprintf("Xray-macos-64.zip")
+		} else if goarch == "arm64" {
+			archiveName = fmt.Sprintf("Xray-macos-arm64-v8a.zip")
+		}
+	case "windows":
+		if goarch == "amd64" {
+			archiveName = fmt.Sprintf("Xray-windows-64.zip")
+		} else if goarch == "arm64" {
+			archiveName = fmt.Sprintf("Xray-windows-arm64-v8a.zip")
+		}
+	}
+
+	if archiveName == "" {
+		return ""
+	}
+
+	return fmt.Sprintf("https://github.com/XTLS/Xray-core/releases/download/v%s/%s", version, archiveName)
+}
+
+func downloadXray(destPath, version, goos, goarch string) error {
+	downloadURL := GenerateXrayDownloadURL(version, goos, goarch)
+	if downloadURL == "" {
+		return fmt.Errorf("unsupported OS/Arch combination: %s/%s", goos, goarch)
+	}
+
+	resp, err := http.Get(downloadURL)
+	if err != nil {
+		return fmt.Errorf("failed to download archive: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to download archive, HTTP status: %d", resp.StatusCode)
+	}
+
+	// Create a temporary file to hold the archive
+	tmpArchive, err := os.CreateTemp("", "xray-archive-*")
+	if err != nil {
+		return fmt.Errorf("failed to create temp archive file: %w", err)
+	}
+	defer os.Remove(tmpArchive.Name())
+	defer tmpArchive.Close()
+
+	if _, err := io.Copy(tmpArchive, resp.Body); err != nil {
+		return fmt.Errorf("failed to save archive to temp file: %w", err)
+	}
+	tmpArchive.Close() // Close before extracting
+
+	binaryName := "xray"
+	if goos == "windows" {
+		binaryName = "xray.exe"
+	}
+
+	// Extract binary from zip archive
+	err = extractZip(tmpArchive.Name(), destPath, binaryName)
+	if err != nil {
+		return fmt.Errorf("failed to extract binary: %w", err)
+	}
+
+	// Ensure executable permissions on Unix-like systems
+	if goos != "windows" {
+		if err := os.Chmod(destPath, 0755); err != nil {
+			return fmt.Errorf("failed to set executable permissions: %w", err)
+		}
+	}
+
+	return nil
+}
+
 func GenerateDownloadURL(version, goos, goarch string) (string, bool) {
 	var archiveName string
 	isZip := false

@@ -28,6 +28,7 @@ func main() {
 		concurrency int
 		timeoutStr  string
 		singboxPath string
+		xrayPath    string
 		silent      bool
 	)
 
@@ -38,6 +39,7 @@ func main() {
 	flag.IntVar(&concurrency, "concurrency", 0, "Integer worker count")
 	flag.StringVar(&timeoutStr, "timeout", "", "Timeout duration (e.g. 8s)")
 	flag.StringVar(&singboxPath, "singbox", "", "Path to sing-box binary")
+	flag.StringVar(&xrayPath, "xray", "", "Path to xray binary")
 	flag.BoolVar(&silent, "silent", false, "Suppress banner and print only essential logs")
 	flag.BoolVar(&silent, "quiet", false, "Suppress banner and print only essential logs (alias for -silent)")
 	flag.Parse()
@@ -76,6 +78,9 @@ func main() {
 	}
 	if singboxPath != "" {
 		cfg.SingboxPath = singboxPath
+	}
+	if xrayPath != "" {
+		cfg.XrayPath = xrayPath
 	}
 
 	if len(cfg.SubURLs) == 0 {
@@ -137,12 +142,29 @@ func main() {
 		log.Printf("Warning: Failed to resolve sing-box binary: %v", err)
 	}
 
-	dialer, err := checker.NewSingboxBinaryDialer(resolvedSingboxPath)
+	var dialers []checker.NodeDialer
+
+	singboxDialer, err := checker.NewSingboxBinaryDialer(resolvedSingboxPath)
 	if err != nil {
 		log.Printf("Warning: Failed to initialize sing-box dialer: %v", err)
 		log.Println("Node connectivity checks might fail if sing-box is not properly installed.")
+	} else {
+		dialers = append(dialers, singboxDialer)
 	}
-	c := checker.NewChecker(checkOpts, dialer)
+
+	resolvedXrayPath, err := checker.ResolveXray(cfg.XrayPath)
+	if err != nil {
+		log.Printf("Warning: Failed to resolve xray binary: %v", err)
+	}
+
+	xrayDialer, err := checker.NewXrayBinaryDialer(resolvedXrayPath)
+	if err != nil {
+		log.Printf("Warning: Failed to initialize xray dialer: %v", err)
+	} else {
+		dialers = append(dialers, xrayDialer)
+	}
+
+	c := checker.NewChecker(checkOpts, dialers...)
 
 	validNodes, generalNodes := c.CheckAll(ctx, nodes)
 

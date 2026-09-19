@@ -39,6 +39,18 @@ jobs:
           chmod +x ./sing-box
           ./sing-box version
 
+      - name: Install Xray-core
+        run: |
+          VERSION="1.8.24"
+          DOWNLOAD_URL="https://github.com/XTLS/Xray-core/releases/download/v${VERSION}/Xray-linux-64.zip"
+          echo "Downloading xray from $DOWNLOAD_URL"
+          wget -q -O xray.zip "$DOWNLOAD_URL"
+          unzip -q xray.zip xray -d ./
+          sudo cp ./xray /usr/local/bin/xray
+          sudo chmod +x /usr/local/bin/xray
+          chmod +x ./xray
+          ./xray version
+
       - name: Build checker
         run: go build -v -o gemini-checker ./cmd/checker
 
@@ -49,10 +61,10 @@ jobs:
           mkdir -p output
           if [ -n "$SUB_URLS" ]; then
             echo "Using SUB_URLS from secrets"
-            ./gemini-checker -sub "$SUB_URLS" -singbox ./sing-box
+            ./gemini-checker -sub "$SUB_URLS" -singbox ./sing-box -xray ./xray
           else
             echo "SUB_URLS secret not found, using config.json"
-            ./gemini-checker -config config.json -singbox ./sing-box
+            ./gemini-checker -config config.json -singbox ./sing-box -xray ./xray
           fi
 
       - name: Deploy to sub branch

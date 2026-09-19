@@ -31,11 +31,11 @@ func DefaultCheckOptions() CheckOptions {
 // Checker orchestrates the concurrent testing of ProxyNodes.
 type Checker struct {
 	options CheckOptions
-	dialer  NodeDialer
+	dialers []NodeDialer
 }
 
-// NewChecker initializes a new Checker with given options and dialer.
-func NewChecker(opts CheckOptions, dialer NodeDialer) *Checker {
+// NewChecker initializes a new Checker with given options and dialers.
+func NewChecker(opts CheckOptions, dialers ...NodeDialer) *Checker {
 	if opts.Concurrency <= 0 {
 		opts.Concurrency = 10
 	}
@@ -50,7 +50,7 @@ func NewChecker(opts CheckOptions, dialer NodeDialer) *Checker {
 	}
 	return &Checker{
 		options: opts,
-		dialer:  dialer,
+		dialers: dialers,
 	}
 }
 
@@ -113,22 +113,41 @@ func (c *Checker) processNode(ctx context.Context, node *types.ProxyNode) {
 	probeCtx, cancel := context.WithTimeout(ctx, c.options.Timeout)
 	defer cancel()
 
-	client, cleanup, err := c.dialer.NewHTTPClient(probeCtx, node)
-	if err != nil {
-		node.IsGeminiCompatible = false
-		return
-	}
-	if cleanup != nil {
-		defer cleanup()
-	}
+	var success bool
+	for _, dialer := range c.dialers {
+		client, cleanup, err := dialer.NewHTTPClient(probeCtx, node)
+		if err != nil {
+			// If dialing fails, try the next dialer
+			continue
+		}
 
-	// Test against all target URLs for compatibility.
-	// The node is considered Gemini compatible only if it passes all target URLs.
-	node.IsGeminiCompatible = true
-	for _, url := range c.options.TargetURLs {
-		Probe(probeCtx, client, node, url)
-		if !node.IsGeminiCompatible {
+		// Test against all target URLs for compatibility.
+		// The node is considered Gemini compatible only if it passes all target URLs.
+		node.IsGeminiCompatible = true
+		for _, url := range c.options.TargetURLs {
+			Probe(probeCtx, client, node, url)
+			if !node.IsGeminiCompatible {
+				break
+			}
+		}
+
+		if cleanup != nil {
+			cleanup()
+		}
+
+		// If the node is alive but not Gemini compatible, it connected successfully
+		// and got blocked by Google. Fallback is unlikely to help here.
+		// If it's alive and Gemini compatible, we found a good node.
+		// If it's NOT alive, the proxy client (e.g. sing-box) failed to proxy traffic,
+		// so we should fallback to the next dialer (e.g. xray).
+		if node.IsAlive {
+			success = true
 			break
 		}
+	}
+
+	if !success {
+		node.IsGeminiCompatible = false
+		node.IsAlive = false
 	}
 }
