@@ -15,22 +15,22 @@ jobs:
         include:
           - os: linux
             arch: amd64
-            artifact_name: gemini-checker-linux-amd64
+            artifact_name: gemini-nodeguard-linux-amd64
           - os: linux
             arch: arm64
-            artifact_name: gemini-checker-linux-arm64
+            artifact_name: gemini-nodeguard-linux-arm64
           - os: darwin
             arch: amd64
-            artifact_name: gemini-checker-darwin-amd64
+            artifact_name: gemini-nodeguard-darwin-amd64
           - os: darwin
             arch: arm64
-            artifact_name: gemini-checker-darwin-arm64
+            artifact_name: gemini-nodeguard-darwin-arm64
           - os: windows
             arch: amd64
-            artifact_name: gemini-checker-windows-amd64.exe
+            artifact_name: gemini-nodeguard-windows-amd64.exe
           - os: windows
             arch: arm64
-            artifact_name: gemini-checker-windows-arm64.exe
+            artifact_name: gemini-nodeguard-windows-arm64.exe
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
