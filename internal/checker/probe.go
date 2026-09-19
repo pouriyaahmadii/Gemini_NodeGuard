@@ -92,7 +92,9 @@ func Probe(ctx context.Context, client *http.Client, node *types.ProxyNode, targ
 			// Check for positive confirmation of accepted location (e.g., missing API key)
 			if bytes.Contains(bodyBuf, []byte("api key not valid")) ||
 				bytes.Contains(bodyBuf, []byte("invalid_argument")) ||
-				bytes.Contains(bodyBuf, []byte("unauthenticated")) {
+				bytes.Contains(bodyBuf, []byte("unauthenticated")) ||
+				bytes.Contains(bodyBuf, []byte("permission_denied")) ||
+				bytes.Contains(bodyBuf, []byte("unregistered callers")) {
 				node.IsGeminiCompatible = true
 				return
 			}
