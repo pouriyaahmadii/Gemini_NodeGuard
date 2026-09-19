@@ -60,22 +60,26 @@ func Probe(ctx context.Context, client *http.Client, node *types.ProxyNode, targ
 	node.IsAlive = true
 
 	// High-performance body inspection
-	buf := make([]byte, 256*1024)
-	n, readErr := io.ReadFull(io.LimitReader(resp.Body, 256*1024), buf)
+	bodyBytes, readErr := io.ReadAll(io.LimitReader(resp.Body, 256*1024))
 	if readErr != nil && readErr != io.ErrUnexpectedEOF && readErr != io.EOF {
 		// Read error, might be a broken connection during transfer
 		node.IsGeminiCompatible = false
 		log.Printf("[Probe] %s: read body error from %s: %v", node.Server, targetURL, readErr)
 		return
 	}
-	bodyBuf := bytes.ToLower(buf[:n])
+
+	lowerBody := strings.ToLower(string(bodyBytes))
+	bodyBuf := []byte(lowerBody) // Keep bodyBuf for geoblockKeywords which is [][]byte
 
 	isAPI := strings.Contains(targetURL, "generativelanguage.googleapis.com")
 
 	if isAPI {
 		// For API endpoints, check for HTTP >= 400 with specific body content
-		if resp.StatusCode >= 400 {
-			if bytes.Contains(bodyBuf, []byte("invalid_argument")) || bytes.Contains(bodyBuf, []byte("api key not valid")) || bytes.Contains(bodyBuf, []byte("permission_denied")) || bytes.Contains(bodyBuf, []byte("method doesn't allow unregistered callers")) {
+		if resp.StatusCode >= 400 && resp.StatusCode < 500 {
+			if strings.Contains(lowerBody, "invalid_argument") ||
+				strings.Contains(lowerBody, "api key") ||
+				strings.Contains(lowerBody, "permission_denied") ||
+				strings.Contains(lowerBody, "unregistered") {
 				// Positive confirmation that API is reachable
 				// Check for geoblock keywords
 				for _, kw := range geoblockKeywords {
@@ -94,7 +98,7 @@ func Probe(ctx context.Context, client *http.Client, node *types.ProxyNode, targ
 		}
 
 		node.IsGeminiCompatible = false
-		log.Printf("[Probe] %s: API endpoint incompatible due to status code %d and body from %s", node.Server, resp.StatusCode, targetURL)
+		log.Printf("[Probe] %s: API endpoint incompatible (status: %d, body: %q)", node.Server, resp.StatusCode, string(bodyBytes))
 		return
 	}
 
