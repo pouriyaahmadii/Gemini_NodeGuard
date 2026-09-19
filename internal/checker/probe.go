@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"log"
 	"net/http"
 	"time"
 
@@ -60,6 +61,7 @@ func Probe(ctx context.Context, client *http.Client, node *types.ProxyNode, targ
 	// If the status is forbidden, too many requests or server error, assume incompatible
 	if resp.StatusCode == http.StatusForbidden || resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode >= 500 {
 		node.IsGeminiCompatible = false
+		log.Printf("[Probe] %s: incompatible due to status code %d from %s", node.Server, resp.StatusCode, targetURL)
 		return
 	}
 
@@ -71,6 +73,7 @@ func Probe(ctx context.Context, client *http.Client, node *types.ProxyNode, targ
 		if err != nil && err != io.ErrUnexpectedEOF && err != io.EOF {
 			// Read error, might be a broken connection during transfer
 			node.IsGeminiCompatible = false
+			log.Printf("[Probe] %s: read body error from %s: %v", node.Server, targetURL, err)
 			return
 		}
 
@@ -79,6 +82,7 @@ func Probe(ctx context.Context, client *http.Client, node *types.ProxyNode, targ
 		for _, kw := range geoblockKeywords {
 			if bytes.Contains(bodyBuf, kw) {
 				node.IsGeminiCompatible = false
+				log.Printf("[Probe] %s: geoblocked keyword found for %s", node.Server, targetURL)
 				return
 			}
 		}
@@ -86,5 +90,6 @@ func Probe(ctx context.Context, client *http.Client, node *types.ProxyNode, targ
 		node.IsGeminiCompatible = true
 	} else {
 		node.IsGeminiCompatible = false
+		log.Printf("[Probe] %s: unexpected status code %d from %s", node.Server, resp.StatusCode, targetURL)
 	}
 }
