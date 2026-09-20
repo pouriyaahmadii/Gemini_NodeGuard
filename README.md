@@ -2,7 +2,8 @@
   <h1>🛡️ Gemini NodeGuard</h1>
   <p><b>A high-performance, privacy-focused proxy subscription tester and classifier designed to verify node compatibility with Google Gemini and Google AI Studio services.</b></p>
   
-  [![Go Version](https://img.shields.io/badge/Go-1.20+-00ADD8?logo=go&logoColor=white)](https://golang.org/)
+  [![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?logo=go&logoColor=white)](https://golang.org/)
+  [![Rust](https://img.shields.io/badge/Rust-Cargo-orange?logo=rust&logoColor=white)](https://www.rust-lang.org/)
   [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
   [![CI Build](https://img.shields.io/badge/build-passing-brightgreen?logo=github-actions)](https://github.com/pouriyaahmadii/gemini-nodeguard/actions)
   [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey)](#)
@@ -12,13 +13,19 @@
 
 ## 📖 Overview
 
-**Gemini NodeGuard** is an automated Go utility designed for users who need reliable and uninterrupted connectivity to Google AI services. It automatically fetches your private proxy subscription links, parses the nodes, and actively probes them to ensure they can connect to Google AI endpoints without hitting annoying geoblocks or authentication false negatives. 
+**Gemini NodeGuard** is an automated utility designed for users who need reliable and uninterrupted connectivity to Google AI services. It automatically fetches your private proxy subscription links, parses the nodes, and actively probes them to ensure they can connect to Google AI endpoints without hitting annoying geoblocks or authentication false negatives. 
+
+Following a major architectural upgrade, Gemini NodeGuard is now a **Monorepo** containing multiple implementations to best fit your environment:
+- **`core-go`**: The robust, production-ready Go CLI.
+- **`gui-windows`**: A lightweight, modern desktop GUI for Windows built with Fyne.
+- **`core-rust`**: A high-throughput, async-first Rust implementation (Foundation phase).
 
 ## ✨ Key Features & Architecture
 
 - 🚀 **Dual-Engine Core Support**: Seamless fallback between `sing-box` and `Xray` cores for maximum protocol coverage, including VLESS, VMess, Reality, Shadowsocks, and Trojan.
-- 🎯 **Dedicated Gemini Probing**: Validates connectivity against `gemini.google.com`, `jules.google.com`, and `generativelanguage.googleapis.com` with smart status-code handling to eliminate unauthenticated false negatives.
-- 📦 **Segmented Plain-Text Outputs**: Exports nodes as clean, readable `vless://...` line-by-line configurations in:
+- 🎯 **Dedicated Gemini Probing**: Validates connectivity against `gemini.google.com`, `jules.google.com`, and `generativelanguage.googleapis.com` with smart status-code handling.
+- 🖥️ **Windows Desktop GUI**: A user-friendly desktop application to easily manage subscriptions and test nodes without using the command line.
+- 📦 **Segmented Plain-Text Outputs**: Exports nodes as clean, readable configurations in:
   - `output/gemini-sub.txt`: Nodes verified to unlock Gemini and Google AI.
   - `output/general-sub.txt`: General alive nodes for everyday web browsing.
 - 🔒 **Privacy-First Design**: No proxies or subscription credentials are ever committed to public git branches.
@@ -40,7 +47,7 @@ Click the **Fork** button at the top right of this page to create your own copy 
 
 ### Step 3: Run the Workflow
 1. Navigate to the **Actions** tab in your repository.
-2. Select the testing workflow on the left sidebar.
+2. Select the **Check and Publish Subscriptions** workflow on the left sidebar.
 3. Click the **Run workflow** dropdown on the right and trigger it.
 
 ### Step 4: Retrieve Your Verified Nodes
@@ -65,17 +72,19 @@ If you prefer an auto-updating live URL for your client:
 
 ## 💻 Local Usage
 
-If you prefer to run the application on your own machine:
+### 1. Windows Desktop GUI
+Download the pre-compiled `gemini-nodeguard-gui-windows-amd64.exe` from the [Releases](https://github.com/pouriyaahmadii/gemini-nodeguard/releases) page.
+- Double click to launch the application.
+- Paste your subscription URLs, click start, and watch the real-time status log!
 
-### Installation
-Make sure you have Go installed, then clone and build the binary:
+### 2. Go CLI (`core-go`)
+If you prefer the command line, make sure you have Go 1.22+ installed:
 ```bash
 git clone https://github.com/pouriyaahmadii/gemini-nodeguard.git
-cd gemini-nodeguard
+cd gemini-nodeguard/core-go
 go build -o gemini-nodeguard cmd/checker/main.go
 ```
 
-### CLI Arguments
 You can customize the execution using command-line flags:
 
 | Flag | Description | Default |
@@ -90,6 +99,13 @@ You can customize the execution using command-line flags:
 **Example Execution:**
 ```bash
 ./gemini-nodeguard -sub "https://your-private-sub.com" -concurrency 20 -timeout 5s
+```
+
+### 3. Rust CLI (`core-rust`)
+The Rust implementation is currently in the foundation phase. You can compile it using Cargo:
+```bash
+cd gemini-nodeguard/core-rust
+cargo build --release
 ```
 
 ---
