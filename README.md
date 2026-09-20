@@ -1,141 +1,104 @@
 <div align="center">
-  <h1>🌌 Gemini NodeGuard</h1>
-  <p><b>A high-performance V2Ray node validator for Google AI Services (Gemini & AI Studio)</b></p>
+  <h1>🛡️ Gemini NodeGuard</h1>
+  <p><b>A high-performance, privacy-focused proxy subscription tester and classifier designed to verify node compatibility with Google Gemini and Google AI Studio services.</b></p>
   
-  [![Go Reference](https://pkg.go.dev/badge/golang.org/x/example.svg)](https://pkg.go.dev/golang.org/x/example)
-  [![Go Report Card](https://goreportcard.com/badge/github.com/pouriyaahmadii/gemini-nodeguard)](https://goreportcard.com/report/github.com/pouriyaahmadii/gemini-nodeguard)
+  [![Go Version](https://img.shields.io/badge/Go-1.20+-00ADD8?logo=go&logoColor=white)](https://golang.org/)
   [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+  [![CI Build](https://img.shields.io/badge/build-passing-brightgreen?logo=github-actions)](https://github.com/pouriyaahmadii/gemini-nodeguard/actions)
+  [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey)](#)
 </div>
 
 ---
 
 ## 📖 Overview
 
-**Gemini NodeGuard** (formerly Gemini Sub Checker) is an automated Go utility designed for users who need reliable and uninterrupted connectivity to Google AI services (such as Gemini and Google AI Studio). It automatically fetches your V2Ray subscription links, parses the nodes, and actively probes them using `sing-box` or `xray` to ensure they can connect to Google AI endpoints without hitting annoying geoblocks or `HTTP 403 Forbidden` errors.
+**Gemini NodeGuard** is an automated Go utility designed for users who need reliable and uninterrupted connectivity to Google AI services. It automatically fetches your private proxy subscription links, parses the nodes, and actively probes them to ensure they can connect to Google AI endpoints without hitting annoying geoblocks or authentication false negatives. 
 
-The final output is a clean, Base64-encoded subscription list that you can directly import into your favorite proxy clients (v2rayN, V2Box, Clash, etc.).
+## ✨ Key Features & Architecture
 
-## ✨ Features
-
-- 🔄 **Automated Parsing**: Fetches and decodes `vmess`, `vless`, `trojan`, `ss`, and `ssr` URIs.
-- 🎯 **Precision Probing**: Verifies connectivity specifically against Google AI endpoints.
-- 🚀 **High Concurrency**: Test hundreds of nodes in seconds using Go's lightweight goroutines.
-- 🛠️ **Multi-Core Engines**: Supports both `sing-box` and `xray` cores as dialing engines.
-- 📦 **Clean Base64 Export**: Generates standardized subscription files compatible with all major clients.
-- 🤖 **CI/CD Ready**: Fully automated via GitHub Actions to continuously update and publish subscriptions.
+- 🚀 **Dual-Engine Core Support**: Seamless fallback between `sing-box` and `Xray` cores for maximum protocol coverage, including VLESS, VMess, Reality, Shadowsocks, and Trojan.
+- 🎯 **Dedicated Gemini Probing**: Validates connectivity against `gemini.google.com`, `jules.google.com`, and `generativelanguage.googleapis.com` with smart status-code handling to eliminate unauthenticated false negatives.
+- 📦 **Segmented Plain-Text Outputs**: Exports nodes as clean, readable `vless://...` line-by-line configurations in:
+  - `output/gemini-sub.txt`: Nodes verified to unlock Gemini and Google AI.
+  - `output/general-sub.txt`: General alive nodes for everyday web browsing.
+- 🔒 **Privacy-First Design**: No proxies or subscription credentials are ever committed to public git branches.
 
 ---
 
-## 🚀 Getting Started
+## ☁️ Step-by-Step User Guide (Fork & Deploy)
 
-### Prerequisites
+You can run your own private, automated checker entirely through GitHub Actions without downloading any code locally.
 
-- **Go 1.20+** installed on your local machine (if building/running locally).
-- **sing-box** or **xray** binary in your system's `$PATH` or specified via CLI flags.
+### Step 1: Fork this repository
+Click the **Fork** button at the top right of this page to create your own copy of the project.
+
+### Step 2: Configure Subscription Links
+1. Go to your forked repository's **Settings > Secrets and variables > Actions**.
+2. Click **New repository secret**.
+3. Name it `SUB_URLS`.
+4. Paste your private subscription links (comma-separated if you have multiple) into the value field.
+
+### Step 3: Run the Workflow
+1. Navigate to the **Actions** tab in your repository.
+2. Select the testing workflow on the left sidebar.
+3. Click the **Run workflow** dropdown on the right and trigger it.
+
+### Step 4: Retrieve Your Verified Nodes
+Once the pipeline finishes, you have two ways to retrieve your nodes:
+
+#### Option A: Direct Download (Default & Easiest)
+1. Open the successful workflow run.
+2. Scroll down to the **Artifacts** section at the bottom.
+3. Download the `validated-nodes.zip` file.
+4. Extract the `.txt` files and import them directly into your client (V2RayNG, Sing-box, Hiddify, etc.).
+
+#### Option B: Private Gist Subscription (Advanced)
+If you prefer an auto-updating live URL for your client:
+1. Create a **Secret Gist** on GitHub and note its ID (the string in the URL).
+2. Generate a GitHub Personal Access Token (classic) with `gist` permissions.
+3. In your repository's **Settings > Secrets and variables > Actions**, add:
+   - `GIST_TOKEN`: Your personal access token.
+   - `GIST_ID`: The ID of the secret Gist you created.
+4. The GitHub Action will now automatically update your Secret Gist, giving you a private, live URL to subscribe to in your proxy client!
+
+---
+
+## 💻 Local Usage
+
+If you prefer to run the application on your own machine:
 
 ### Installation
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/pouriyaahmadii/gemini-nodeguard.git
-   cd gemini-nodeguard
-   ```
-2. Build the binary:
-   ```bash
-   go build -o gemini-nodeguard ./cmd/checker
-   ```
-
-### Local Usage
-
-You can run the checker locally using command-line flags or a configuration JSON file.
-
+Make sure you have Go installed, then clone and build the binary:
 ```bash
-./gemini-nodeguard -sub "https://your-sub-link.com/sub1,https://your-sub-link.com/sub2" -concurrency 20 -timeout 5s
+git clone https://github.com/pouriyaahmadii/gemini-nodeguard.git
+cd gemini-nodeguard
+go build -o gemini-nodeguard cmd/checker/main.go
 ```
 
-#### Available CLI Flags:
+### CLI Arguments
+You can customize the execution using command-line flags:
 
 | Flag | Description | Default |
 | :--- | :--- | :--- |
-| `-sub` | Comma-separated subscription URLs to fetch nodes from | `""` |
-| `-targets` | Comma-separated target URLs to test (e.g., gemini.google.com) | Defined in config |
-| `-config` | Path to a `config.json` file | `""` |
-| `-out` | Output file path for the Gemini-compatible nodes | `output/gemini-sub.txt` |
-| `-concurrency` | Number of concurrent worker threads | `10` |
-| `-timeout` | Timeout duration for node testing (e.g., `8s`) | `5s` |
-| `-singbox` | Custom path to the `sing-box` binary | auto-detected |
-| `-xray` | Custom path to the `xray` binary | auto-detected |
-| `-silent` | Suppress the banner and print only essential logs | `false` |
+| `-sub` | Raw subscription URL (comma-separated) or path to an input file. | `""` |
+| `-config` | Path to a `config.json` configuration file. | `""` |
+| `-singbox` | Custom path to the `sing-box` binary. | Auto-detected |
+| `-xray` | Custom path to the `xray` binary. | Auto-detected |
+| `-concurrency`| Number of concurrent worker threads for testing nodes. | `10` |
+| `-timeout` | Timeout duration for each node probe (e.g., `8s`). | `8s` |
+
+**Example Execution:**
+```bash
+./gemini-nodeguard -sub "https://your-private-sub.com" -concurrency 20 -timeout 5s
+```
 
 ---
 
-## ☁️ GitHub Actions Automation (Recommended)
+## 🔒 Security & Disclaimer
 
-You can run this project completely hands-free using GitHub Actions!
+**Privacy First:** All raw inputs and checked outputs are completely isolated per fork. Your node links and configurations are processed on secure, ephemeral GitHub Runners and are **never** transmitted to any external third parties, servers, or central tracking databases. 
 
-1. **Fork** this repository.
-2. Navigate to your repository's **Settings > Secrets and variables > Actions**.
-3. Create a new repository secret named `SUB_URLS`.
-4. Paste your private subscription links (comma-separated if multiple) into the value.
-
-The built-in GitHub workflow (`.github/workflows/check-and-publish.yml`) will run **every 4 hours**, test your nodes, and push the results to the `sub` branch of your repository.
-
-### 📥 Subscribing to the Results (How to download configs)
-
-Once the pipeline finishes, the tested nodes are saved in the `sub` branch of your repository. You don't need to download files manually; you can directly subscribe to them using their raw links!
-
-**How to import into your client (e.g., v2rayN, V2Box, Clash, Streisand):**
-1. Copy the raw URL for the nodes you want from below.
-2. Open your proxy client.
-3. Look for an option like **"Subscription Group"**, **"Add Subscription"**, or **"Update Subscription from URL"**.
-4. Paste the URL and hit update. Your client will automatically download all the tested configs!
-
-✅ **1. Gemini-Compatible Nodes**  
-Contains ONLY the verified nodes that successfully connected to Google AI (prefixed with `[Gemini]`).
-```text
-https://raw.githubusercontent.com/<USERNAME>/<REPO>/sub/gemini-sub.txt
-```
-*(Example: `https://raw.githubusercontent.com/pouriyaahmadii/gemini-nodeguard/sub/gemini-sub.txt`)*
-
-🌐 **2. General Nodes**  
-Contains nodes that work as a normal proxy but are geoblocked or restricted by Google AI (prefixed with `[General]`).
-```text
-https://raw.githubusercontent.com/<USERNAME>/<REPO>/sub/general-sub.txt
-```
-*(Example: `https://raw.githubusercontent.com/pouriyaahmadii/gemini-nodeguard/sub/general-sub.txt`)*
-
-> [!NOTE]
-> Always make sure to replace `<USERNAME>` and `<REPO>` in the URL with your own GitHub username and repository name if you have forked this project.
-
----
-
-## 🏗️ Project Structure
-
-```text
-├── cmd/
-│   └── checker/
-│       └── main.go                  # Main entry point for the CLI application
-├── internal/
-│   ├── banner/                      # CLI ASCII banner generation
-│   ├── checker/                     # Core probing logic, dialers (sing-box/xray), and downloader
-│   ├── config/                      # Configuration management and config structs
-│   ├── exporter/                    # Base64 encoding, formatting, and file writing
-│   ├── fetcher/                     # HTTP fetching for remote subscription links
-│   ├── parser/                      # URI parsing logic (vmess, vless, trojan, ss, ssr)
-│   └── types/                       # Shared models and struct definitions
-├── .github/
-│   └── workflows/
-│       ├── check-and-publish.yml    # Scheduled routine for testing nodes and updating repo
-│       └── release.yml              # Automated pipeline for building cross-platform binaries
-├── test_probe.go                    # Utility script for manually verifying probe functions
-├── test_race.sh                     # Shell script for running Go race detector tests
-├── go.mod                           # Go module dependencies
-└── README.md                        # Project documentation
-```
-
-## 🤝 Contributing
-
-Contributions are always welcome! Feel free to open an issue or submit a Pull Request if you have suggestions for improvements, new features, or bug fixes.
+*Use this tool responsibly. The authors are not responsible for how the proxy nodes are utilized by the end-user.*
 
 ## 📄 License
 
