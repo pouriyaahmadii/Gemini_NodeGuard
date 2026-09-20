@@ -104,17 +104,24 @@ https://raw.githubusercontent.com/<USERNAME>/<REPO>/sub/general-sub.txt
 
 ```text
 ├── cmd/
-│   └── checker/       # Main entry point for the CLI application
+│   └── checker/
+│       └── main.go                  # Main entry point for the CLI application
 ├── internal/
-│   ├── banner/        # CLI ASCII banner generation
-│   ├── checker/       # Core probing logic (sing-box/xray dialers)
-│   ├── config/        # Configuration management
-│   ├── exporter/      # Base64 encoding and file writing
-│   ├── fetcher/       # HTTP fetching for subscription links
-│   ├── parser/        # URI parsing for vmess, vless, trojan, etc.
-│   └── types/         # Shared struct definitions
-├── .github/workflows/ # CI/CD automation scripts
-└── go.mod             # Go module dependencies
+│   ├── banner/                      # CLI ASCII banner generation
+│   ├── checker/                     # Core probing logic, dialers (sing-box/xray), and downloader
+│   ├── config/                      # Configuration management and config structs
+│   ├── exporter/                    # Base64 encoding, formatting, and file writing
+│   ├── fetcher/                     # HTTP fetching for remote subscription links
+│   ├── parser/                      # URI parsing logic (vmess, vless, trojan, ss, ssr)
+│   └── types/                       # Shared models and struct definitions
+├── .github/
+│   └── workflows/
+│       ├── check-and-publish.yml    # Scheduled routine for testing nodes and updating repo
+│       └── release.yml              # Automated pipeline for building cross-platform binaries
+├── test_probe.go                    # Utility script for manually verifying probe functions
+├── test_race.sh                     # Shell script for running Go race detector tests
+├── go.mod                           # Go module dependencies
+└── README.md                        # Project documentation
 ```
 
 ## 🤝 Contributing
