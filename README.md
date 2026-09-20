@@ -80,23 +80,32 @@ You can run this project completely hands-free using GitHub Actions!
 
 The built-in GitHub workflow (`.github/workflows/check-and-publish.yml`) will run **every 4 hours**, test your nodes, and push the results to the `sub` branch of your repository.
 
-### Subscribing to the Results
+### 📥 Subscribing to the Results (How to download configs)
 
-Once the pipeline finishes, you can add these raw links to your V2Ray client:
+Once the pipeline finishes, the tested nodes are saved in the `sub` branch of your repository. You don't need to download files manually; you can directly subscribe to them using their raw links!
+
+**How to import into your client (e.g., v2rayN, V2Box, Clash, Streisand):**
+1. Copy the raw URL for the nodes you want from below.
+2. Open your proxy client.
+3. Look for an option like **"Subscription Group"**, **"Add Subscription"**, or **"Update Subscription from URL"**.
+4. Paste the URL and hit update. Your client will automatically download all the tested configs!
 
 ✅ **1. Gemini-Compatible Nodes**  
-Contains ONLY the verified nodes that work with Google AI (prefixed with `[Gemini]`).
+Contains ONLY the verified nodes that successfully connected to Google AI (prefixed with `[Gemini]`).
 ```text
 https://raw.githubusercontent.com/<USERNAME>/<REPO>/sub/gemini-sub.txt
 ```
+*(Example: `https://raw.githubusercontent.com/pouriyaahmadii/gemini-nodeguard/sub/gemini-sub.txt`)*
 
 🌐 **2. General Nodes**  
-Contains nodes that successfully work as a proxy but are geoblocked by Google AI (prefixed with `[General]`).
+Contains nodes that work as a normal proxy but are geoblocked or restricted by Google AI (prefixed with `[General]`).
 ```text
 https://raw.githubusercontent.com/<USERNAME>/<REPO>/sub/general-sub.txt
 ```
+*(Example: `https://raw.githubusercontent.com/pouriyaahmadii/gemini-nodeguard/sub/general-sub.txt`)*
 
-*(Replace `<USERNAME>` and `<REPO>` with your actual GitHub username and repository name)*
+> [!NOTE]
+> Always make sure to replace `<USERNAME>` and `<REPO>` in the URL with your own GitHub username and repository name if you have forked this project.
 
 ---
 
