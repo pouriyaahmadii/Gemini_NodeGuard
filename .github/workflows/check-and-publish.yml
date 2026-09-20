@@ -67,10 +67,11 @@ jobs:
             ./gemini-checker -config config.json -singbox ./sing-box -xray ./xray
           fi
 
-      - name: Deploy to sub branch
-        uses: peaceiris/actions-gh-pages@v4
+      - name: Upload Checked Subscriptions
+        uses: actions/upload-artifact@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: sub
-          publish_dir: ./output
-          force_orphan: true
+          name: validated-nodes
+          path: |
+            output/gemini.txt
+            output/general-sub.txt
+          retention-days: 1
