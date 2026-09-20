@@ -8,7 +8,7 @@ on:
     branches:
       - main
     paths:
-      - 'config.json'
+      - 'core-go/config.json'
 
 permissions:
   contents: write
@@ -52,19 +52,20 @@ jobs:
           ./xray version
 
       - name: Build checker
-        run: go build -v -o gemini-checker ./cmd/checker
+        run: cd core-go && go build -v -o gemini-checker ./cmd/checker
 
       - name: Run checker
         env:
           SUB_URLS: ${{ secrets.SUB_URLS }}
         run: |
+          cd core-go
           mkdir -p output
           if [ -n "$SUB_URLS" ]; then
             echo "Using SUB_URLS from secrets"
-            ./gemini-checker -sub "$SUB_URLS" -singbox ./sing-box -xray ./xray
+            ./gemini-checker -sub "$SUB_URLS" -singbox ../sing-box -xray ../xray
           else
             echo "SUB_URLS secret not found, using config.json"
-            ./gemini-checker -config config.json -singbox ./sing-box -xray ./xray
+            ./gemini-checker -config config.json -singbox ../sing-box -xray ../xray
           fi
 
       - name: Upload Checked Subscriptions
@@ -72,6 +73,23 @@ jobs:
         with:
           name: validated-nodes
           path: |
-            output/gemini.txt
-            output/general-sub.txt
+            core-go/output/gemini.txt
+            core-go/output/general-sub.txt
           retention-days: 1
+
+      - name: Update Secret Gist
+        if: env.GIST_TOKEN != '' && env.GIST_ID != ''
+        env:
+          GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
+          GIST_ID: ${{ secrets.GIST_ID }}
+        run: |
+          cd core-go
+          if [ ! -f "output/gemini.txt" ]; then echo "No nodes found, skipping gist update"; exit 0; fi
+          ESCAPED_CONTENT=$(cat output/gemini.txt | jq -Rs .)
+          JSON_PAYLOAD="{\"files\":{\"gemini-subscription.txt\":{\"content\":$ESCAPED_CONTENT}}}"
+          curl -L -X PATCH \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GIST_TOKEN" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            https://api.github.com/gists/$GIST_ID \
+            -d "$JSON_PAYLOAD"
