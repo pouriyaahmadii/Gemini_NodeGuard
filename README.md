@@ -5,8 +5,13 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   [![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?logo=go&logoColor=white)](https://golang.org/)
   [![Rust](https://img.shields.io/badge/Rust-Cargo-orange?logo=rust&logoColor=white)](https://www.rust-lang.org/)
+=======
+  [![Go Reference](https://pkg.go.dev/badge/golang.org/x/example.svg)](https://pkg.go.dev/golang.org/x/example)
+  [![Go Report Card](https://goreportcard.com/badge/github.com/pouriyaahmadii/gemini-nodeguard)](https://goreportcard.com/report/github.com/pouriyaahmadii/gemini-nodeguard)
+>>>>>>> parent of a855912 (Refresh README for privacy-first workflow)
 =======
   [![Go Reference](https://pkg.go.dev/badge/golang.org/x/example.svg)](https://pkg.go.dev/golang.org/x/example)
   [![Go Report Card](https://goreportcard.com/badge/github.com/pouriyaahmadii/gemini-nodeguard)](https://goreportcard.com/report/github.com/pouriyaahmadii/gemini-nodeguard)
@@ -26,6 +31,7 @@
 
 ## 📖 Overview
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -62,6 +68,12 @@ The final output is a clean, Base64-encoded subscription list that you can direc
 The final output is a clean, Base64-encoded subscription list that you can directly import into your favorite proxy clients (v2rayN, V2Box, Clash, etc.).
 
 >>>>>>> parent of a855912 (Refresh README for privacy-first workflow)
+=======
+**Gemini NodeGuard** (formerly Gemini Sub Checker) is an automated Go utility designed for users who need reliable and uninterrupted connectivity to Google AI services (such as Gemini and Google AI Studio). It automatically fetches your V2Ray subscription links, parses the nodes, and actively probes them using `sing-box` or `xray` to ensure they can connect to Google AI endpoints without hitting annoying geoblocks or `HTTP 403 Forbidden` errors.
+
+The final output is a clean, Base64-encoded subscription list that you can directly import into your favorite proxy clients (v2rayN, V2Box, Clash, etc.).
+
+>>>>>>> parent of a855912 (Refresh README for privacy-first workflow)
 ## ✨ Features
 
 - 🔄 **Automated Parsing**: Fetches and decodes `vmess`, `vless`, `trojan`, `ss`, and `ssr` URIs.
@@ -72,6 +84,9 @@ The final output is a clean, Base64-encoded subscription list that you can direc
 - 🤖 **CI/CD Ready**: Fully automated via GitHub Actions to continuously update and publish subscriptions.
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> parent of a855912 (Refresh README for privacy-first workflow)
+=======
 >>>>>>> parent of a855912 (Refresh README for privacy-first workflow)
 =======
 >>>>>>> parent of a855912 (Refresh README for privacy-first workflow)
@@ -84,6 +99,7 @@ The final output is a clean, Base64-encoded subscription list that you can direc
 
 ### Prerequisites
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -215,6 +231,32 @@ You can run the checker locally using command-line flags or a configuration JSON
 
 #### Available CLI Flags:
 >>>>>>> parent of a855912 (Refresh README for privacy-first workflow)
+=======
+- **Go 1.20+** installed on your local machine (if building/running locally).
+- **sing-box** or **xray** binary in your system's `$PATH` or specified via CLI flags.
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/pouriyaahmadii/gemini-nodeguard.git
+   cd gemini-nodeguard
+   ```
+2. Build the binary:
+   ```bash
+   go build -o gemini-nodeguard ./cmd/checker
+   ```
+
+### Local Usage
+
+You can run the checker locally using command-line flags or a configuration JSON file.
+
+```bash
+./gemini-nodeguard -sub "https://your-sub-link.com/sub1,https://your-sub-link.com/sub2" -concurrency 20 -timeout 5s
+```
+
+#### Available CLI Flags:
+>>>>>>> parent of a855912 (Refresh README for privacy-first workflow)
 
 | Flag | Description | Default |
 | :--- | :--- | :--- |
@@ -229,6 +271,7 @@ You can run the checker locally using command-line flags or a configuration JSON
 | `-silent` | Suppress the banner and print only essential logs | `false` |
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 ### 3. Rust CLI (`core-rust`)
 The Rust implementation is currently in the foundation phase. You can compile it using Cargo:
@@ -236,6 +279,8 @@ The Rust implementation is currently in the foundation phase. You can compile it
 cd gemini-nodeguard/core-rust
 cargo build --release
 ```
+=======
+>>>>>>> parent of a855912 (Refresh README for privacy-first workflow)
 =======
 >>>>>>> parent of a855912 (Refresh README for privacy-first workflow)
 =======
@@ -255,6 +300,7 @@ You can run this project completely hands-free using GitHub Actions!
 The built-in GitHub workflow (`.github/workflows/check-and-publish.yml`) will run **every 4 hours**, test your nodes, and push the results to the `sub` branch of your repository.
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 ### Subscribing to the Results
 
 Once the pipeline finishes, you can add these raw links to your V2Ray client:
@@ -273,6 +319,8 @@ https://raw.githubusercontent.com/<USERNAME>/<REPO>/sub/general-sub.txt
 
 *(Replace `<USERNAME>` and `<REPO>` with your actual GitHub username and repository name)*
 =======
+=======
+>>>>>>> parent of a855912 (Refresh README for privacy-first workflow)
 ### 📥 Subscribing to the Results (How to download configs)
 
 Once the pipeline finishes, the tested nodes are saved in the `sub` branch of your repository. You don't need to download files manually; you can directly subscribe to them using their raw links!
@@ -299,6 +347,9 @@ https://raw.githubusercontent.com/<USERNAME>/<REPO>/sub/general-sub.txt
 
 > [!NOTE]
 > Always make sure to replace `<USERNAME>` and `<REPO>` in the URL with your own GitHub username and repository name if you have forked this project.
+<<<<<<< HEAD
+>>>>>>> parent of a855912 (Refresh README for privacy-first workflow)
+=======
 >>>>>>> parent of a855912 (Refresh README for privacy-first workflow)
 
 ---
