@@ -16,7 +16,7 @@ The final output is a clean, Base64-encoded subscription list that you can direc
 
 - 🚀 **Dual-Engine Core Support**: Seamless fallback between `sing-box` and `Xray` cores for maximum protocol coverage, including VLESS, VMess, Reality, Shadowsocks, and Trojan.
 - 🎯 **Dedicated Gemini Probing**: Validates connectivity against `gemini.google.com`, `jules.google.com`, and `generativelanguage.googleapis.com` with smart status-code handling.
-- 🖥️ **Windows Desktop GUI**: A user-friendly desktop application to easily manage subscriptions and test nodes without using the command line.
+- 🌍 **Cross-Platform Support**: Works seamlessly across Windows, macOS, and Linux via CLI, alongside a dedicated Windows Desktop GUI.
 - 📦 **Segmented Plain-Text Outputs**: Exports nodes as clean, readable configurations in:
   - `output/gemini-sub.txt`: Nodes verified to unlock Gemini and Google AI.
   - `output/general-sub.txt`: General alive nodes for everyday web browsing.
@@ -28,6 +28,7 @@ The final output is a clean, Base64-encoded subscription list that you can direc
 - 🎯 **Precision Probing**: Verifies connectivity specifically against Google AI endpoints.
 - 🚀 **High Concurrency**: Test hundreds of nodes in seconds using Go's lightweight goroutines.
 - 🛠️ **Multi-Core Engines**: Supports both `sing-box` and `xray` cores as dialing engines.
+- 🌍 **Cross-Platform**: Native binaries for Windows, macOS, and Linux.
 - 📦 **Clean Base64 Export**: Generates standardized subscription files compatible with all major clients.
 - 🤖 **CI/CD Ready**: Fully automated via GitHub Actions to continuously update and publish subscriptions.
 
