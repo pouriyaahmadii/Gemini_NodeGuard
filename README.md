@@ -3,8 +3,13 @@
   <p><b>A high-performance V2Ray node validator for Google AI Services (Gemini & AI Studio)</b></p>
   
 <<<<<<< HEAD
+<<<<<<< HEAD
   [![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?logo=go&logoColor=white)](https://golang.org/)
   [![Rust](https://img.shields.io/badge/Rust-Cargo-orange?logo=rust&logoColor=white)](https://www.rust-lang.org/)
+=======
+  [![Go Reference](https://pkg.go.dev/badge/golang.org/x/example.svg)](https://pkg.go.dev/golang.org/x/example)
+  [![Go Report Card](https://goreportcard.com/badge/github.com/pouriyaahmadii/gemini-nodeguard)](https://goreportcard.com/report/github.com/pouriyaahmadii/gemini-nodeguard)
+>>>>>>> parent of a855912 (Refresh README for privacy-first workflow)
 =======
   [![Go Reference](https://pkg.go.dev/badge/golang.org/x/example.svg)](https://pkg.go.dev/golang.org/x/example)
   [![Go Report Card](https://goreportcard.com/badge/github.com/pouriyaahmadii/gemini-nodeguard)](https://goreportcard.com/report/github.com/pouriyaahmadii/gemini-nodeguard)
@@ -16,6 +21,7 @@
 
 ## 📖 Overview
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 **Gemini NodeGuard** is an automated utility designed for users who need reliable and uninterrupted connectivity to Google AI services. It automatically fetches your private proxy subscription links, parses the nodes, and actively probes them to ensure they can connect to Google AI endpoints without hitting annoying geoblocks or authentication false negatives. 
 
@@ -38,6 +44,12 @@ The final output is a clean, Base64-encoded subscription list that you can direc
   - `output/general-sub.txt`: General alive nodes for everyday web browsing.
 - 🔒 **Privacy-First Design**: No proxies or subscription credentials are ever committed to public git branches.
 =======
+=======
+**Gemini NodeGuard** (formerly Gemini Sub Checker) is an automated Go utility designed for users who need reliable and uninterrupted connectivity to Google AI services (such as Gemini and Google AI Studio). It automatically fetches your V2Ray subscription links, parses the nodes, and actively probes them using `sing-box` or `xray` to ensure they can connect to Google AI endpoints without hitting annoying geoblocks or `HTTP 403 Forbidden` errors.
+
+The final output is a clean, Base64-encoded subscription list that you can directly import into your favorite proxy clients (v2rayN, V2Box, Clash, etc.).
+
+>>>>>>> parent of a855912 (Refresh README for privacy-first workflow)
 ## ✨ Features
 
 - 🔄 **Automated Parsing**: Fetches and decodes `vmess`, `vless`, `trojan`, `ss`, and `ssr` URIs.
@@ -46,6 +58,9 @@ The final output is a clean, Base64-encoded subscription list that you can direc
 - 🛠️ **Multi-Core Engines**: Supports both `sing-box` and `xray` cores as dialing engines.
 - 📦 **Clean Base64 Export**: Generates standardized subscription files compatible with all major clients.
 - 🤖 **CI/CD Ready**: Fully automated via GitHub Actions to continuously update and publish subscriptions.
+<<<<<<< HEAD
+>>>>>>> parent of a855912 (Refresh README for privacy-first workflow)
+=======
 >>>>>>> parent of a855912 (Refresh README for privacy-first workflow)
 
 ---
@@ -54,6 +69,7 @@ The final output is a clean, Base64-encoded subscription list that you can direc
 
 ### Prerequisites
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 ### Step 1: Fork this repository
 Click the **Fork** button at the top right of this page to create your own copy of the project.
@@ -131,6 +147,32 @@ You can run the checker locally using command-line flags or a configuration JSON
 
 #### Available CLI Flags:
 >>>>>>> parent of a855912 (Refresh README for privacy-first workflow)
+=======
+- **Go 1.20+** installed on your local machine (if building/running locally).
+- **sing-box** or **xray** binary in your system's `$PATH` or specified via CLI flags.
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/pouriyaahmadii/gemini-nodeguard.git
+   cd gemini-nodeguard
+   ```
+2. Build the binary:
+   ```bash
+   go build -o gemini-nodeguard ./cmd/checker
+   ```
+
+### Local Usage
+
+You can run the checker locally using command-line flags or a configuration JSON file.
+
+```bash
+./gemini-nodeguard -sub "https://your-sub-link.com/sub1,https://your-sub-link.com/sub2" -concurrency 20 -timeout 5s
+```
+
+#### Available CLI Flags:
+>>>>>>> parent of a855912 (Refresh README for privacy-first workflow)
 
 | Flag | Description | Default |
 | :--- | :--- | :--- |
@@ -143,6 +185,7 @@ You can run the checker locally using command-line flags or a configuration JSON
 | `-singbox` | Custom path to the `sing-box` binary | auto-detected |
 | `-xray` | Custom path to the `xray` binary | auto-detected |
 | `-silent` | Suppress the banner and print only essential logs | `false` |
+<<<<<<< HEAD
 
 ### 3. Rust CLI (`core-rust`)
 The Rust implementation is currently in the foundation phase. You can compile it using Cargo:
@@ -150,6 +193,8 @@ The Rust implementation is currently in the foundation phase. You can compile it
 cd gemini-nodeguard/core-rust
 cargo build --release
 ```
+=======
+>>>>>>> parent of a855912 (Refresh README for privacy-first workflow)
 
 ---
 
