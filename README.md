@@ -4,8 +4,13 @@
   
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   [![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?logo=go&logoColor=white)](https://golang.org/)
   [![Rust](https://img.shields.io/badge/Rust-Cargo-orange?logo=rust&logoColor=white)](https://www.rust-lang.org/)
+=======
+  [![Go Reference](https://pkg.go.dev/badge/golang.org/x/example.svg)](https://pkg.go.dev/golang.org/x/example)
+  [![Go Report Card](https://goreportcard.com/badge/github.com/pouriyaahmadii/gemini-nodeguard)](https://goreportcard.com/report/github.com/pouriyaahmadii/gemini-nodeguard)
+>>>>>>> parent of a855912 (Refresh README for privacy-first workflow)
 =======
   [![Go Reference](https://pkg.go.dev/badge/golang.org/x/example.svg)](https://pkg.go.dev/golang.org/x/example)
   [![Go Report Card](https://goreportcard.com/badge/github.com/pouriyaahmadii/gemini-nodeguard)](https://goreportcard.com/report/github.com/pouriyaahmadii/gemini-nodeguard)
@@ -21,6 +26,7 @@
 
 ## 📖 Overview
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 **Gemini NodeGuard** is an automated utility designed for users who need reliable and uninterrupted connectivity to Google AI services. It automatically fetches your private proxy subscription links, parses the nodes, and actively probes them to ensure they can connect to Google AI endpoints without hitting annoying geoblocks or authentication false negatives. 
@@ -50,6 +56,12 @@ The final output is a clean, Base64-encoded subscription list that you can direc
 The final output is a clean, Base64-encoded subscription list that you can directly import into your favorite proxy clients (v2rayN, V2Box, Clash, etc.).
 
 >>>>>>> parent of a855912 (Refresh README for privacy-first workflow)
+=======
+**Gemini NodeGuard** (formerly Gemini Sub Checker) is an automated Go utility designed for users who need reliable and uninterrupted connectivity to Google AI services (such as Gemini and Google AI Studio). It automatically fetches your V2Ray subscription links, parses the nodes, and actively probes them using `sing-box` or `xray` to ensure they can connect to Google AI endpoints without hitting annoying geoblocks or `HTTP 403 Forbidden` errors.
+
+The final output is a clean, Base64-encoded subscription list that you can directly import into your favorite proxy clients (v2rayN, V2Box, Clash, etc.).
+
+>>>>>>> parent of a855912 (Refresh README for privacy-first workflow)
 ## ✨ Features
 
 - 🔄 **Automated Parsing**: Fetches and decodes `vmess`, `vless`, `trojan`, `ss`, and `ssr` URIs.
@@ -59,6 +71,9 @@ The final output is a clean, Base64-encoded subscription list that you can direc
 - 📦 **Clean Base64 Export**: Generates standardized subscription files compatible with all major clients.
 - 🤖 **CI/CD Ready**: Fully automated via GitHub Actions to continuously update and publish subscriptions.
 <<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> parent of a855912 (Refresh README for privacy-first workflow)
+=======
 >>>>>>> parent of a855912 (Refresh README for privacy-first workflow)
 =======
 >>>>>>> parent of a855912 (Refresh README for privacy-first workflow)
@@ -69,6 +84,7 @@ The final output is a clean, Base64-encoded subscription list that you can direc
 
 ### Prerequisites
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 ### Step 1: Fork this repository
@@ -173,6 +189,32 @@ You can run the checker locally using command-line flags or a configuration JSON
 
 #### Available CLI Flags:
 >>>>>>> parent of a855912 (Refresh README for privacy-first workflow)
+=======
+- **Go 1.20+** installed on your local machine (if building/running locally).
+- **sing-box** or **xray** binary in your system's `$PATH` or specified via CLI flags.
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/pouriyaahmadii/gemini-nodeguard.git
+   cd gemini-nodeguard
+   ```
+2. Build the binary:
+   ```bash
+   go build -o gemini-nodeguard ./cmd/checker
+   ```
+
+### Local Usage
+
+You can run the checker locally using command-line flags or a configuration JSON file.
+
+```bash
+./gemini-nodeguard -sub "https://your-sub-link.com/sub1,https://your-sub-link.com/sub2" -concurrency 20 -timeout 5s
+```
+
+#### Available CLI Flags:
+>>>>>>> parent of a855912 (Refresh README for privacy-first workflow)
 
 | Flag | Description | Default |
 | :--- | :--- | :--- |
@@ -186,6 +228,7 @@ You can run the checker locally using command-line flags or a configuration JSON
 | `-xray` | Custom path to the `xray` binary | auto-detected |
 | `-silent` | Suppress the banner and print only essential logs | `false` |
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 ### 3. Rust CLI (`core-rust`)
 The Rust implementation is currently in the foundation phase. You can compile it using Cargo:
@@ -193,6 +236,8 @@ The Rust implementation is currently in the foundation phase. You can compile it
 cd gemini-nodeguard/core-rust
 cargo build --release
 ```
+=======
+>>>>>>> parent of a855912 (Refresh README for privacy-first workflow)
 =======
 >>>>>>> parent of a855912 (Refresh README for privacy-first workflow)
 
@@ -209,6 +254,7 @@ You can run this project completely hands-free using GitHub Actions!
 
 The built-in GitHub workflow (`.github/workflows/check-and-publish.yml`) will run **every 4 hours**, test your nodes, and push the results to the `sub` branch of your repository.
 
+<<<<<<< HEAD
 ### Subscribing to the Results
 
 Once the pipeline finishes, you can add these raw links to your V2Ray client:
@@ -226,6 +272,34 @@ https://raw.githubusercontent.com/<USERNAME>/<REPO>/sub/general-sub.txt
 ```
 
 *(Replace `<USERNAME>` and `<REPO>` with your actual GitHub username and repository name)*
+=======
+### 📥 Subscribing to the Results (How to download configs)
+
+Once the pipeline finishes, the tested nodes are saved in the `sub` branch of your repository. You don't need to download files manually; you can directly subscribe to them using their raw links!
+
+**How to import into your client (e.g., v2rayN, V2Box, Clash, Streisand):**
+1. Copy the raw URL for the nodes you want from below.
+2. Open your proxy client.
+3. Look for an option like **"Subscription Group"**, **"Add Subscription"**, or **"Update Subscription from URL"**.
+4. Paste the URL and hit update. Your client will automatically download all the tested configs!
+
+✅ **1. Gemini-Compatible Nodes**  
+Contains ONLY the verified nodes that successfully connected to Google AI (prefixed with `[Gemini]`).
+```text
+https://raw.githubusercontent.com/<USERNAME>/<REPO>/sub/gemini-sub.txt
+```
+*(Example: `https://raw.githubusercontent.com/pouriyaahmadii/gemini-nodeguard/sub/gemini-sub.txt`)*
+
+🌐 **2. General Nodes**  
+Contains nodes that work as a normal proxy but are geoblocked or restricted by Google AI (prefixed with `[General]`).
+```text
+https://raw.githubusercontent.com/<USERNAME>/<REPO>/sub/general-sub.txt
+```
+*(Example: `https://raw.githubusercontent.com/pouriyaahmadii/gemini-nodeguard/sub/general-sub.txt`)*
+
+> [!NOTE]
+> Always make sure to replace `<USERNAME>` and `<REPO>` in the URL with your own GitHub username and repository name if you have forked this project.
+>>>>>>> parent of a855912 (Refresh README for privacy-first workflow)
 
 ---
 
