@@ -1,6 +1,7 @@
 <div align="center">
   <h1>🌌 Gemini NodeGuard</h1>
-  <p><b>A high-performance V2Ray node validator for Google AI Services (Gemini & AI Studio)</b></p>
+  <p><b>A high-performance, cross-platform V2Ray node validator for Google AI Services (Gemini & AI Studio)</b></p>
+  <p><i>Available for Windows, macOS, and Linux</i></p>
   
   [![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?logo=go&logoColor=white)](https://golang.org/)
   [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
