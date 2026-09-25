@@ -72,6 +72,15 @@ jobs:
         with:
           name: validated-nodes
           path: |
-            output/gemini.txt
+            output/gemini-sub.txt
             output/general-sub.txt
           retention-days: 1
+
+      - name: Output Direct Subscription Links
+        if: always()
+        run: |
+          echo "### 🚀 Direct Subscription Links" >> $GITHUB_STEP_SUMMARY
+          if [ -n "${{ secrets.GIST_ID }}" ]; then
+            echo "- **Gemini Direct Link**: \`[https://gist.githubusercontent.com/$](https://gist.githubusercontent.com/$){{ github.repository_owner }}/${{ secrets.GIST_ID }}/raw/gemini-sub.txt\`" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "- **Local Artifact**: Download \`validated-nodes\` artifact below for plain-text \`vless://\` links." >> $GITHUB_STEP_SUMMARY
