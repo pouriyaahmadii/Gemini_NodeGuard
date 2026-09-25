@@ -188,16 +188,13 @@ func main() {
 	// Export Gemini
 	if len(validNodes) > 0 {
 		log.Printf("Exporting Gemini nodes...")
-		encoded, err := exporter.ExportBase64(validNodes, expOptsGemini)
-		if err != nil {
-			log.Fatalf("Failed to export Gemini nodes to base64: %v", err)
-		}
+		plainText := exporter.ExportPlain(validNodes, expOptsGemini)
 
 		geminiPath := "output/gemini-sub.txt"
 		if cfg.OutputPath != "" {
 			geminiPath = cfg.OutputPath
 		}
-		if err := exporter.WriteToFile(geminiPath, encoded); err != nil {
+		if err := exporter.WriteToFile(geminiPath, plainText); err != nil {
 			log.Fatalf("Failed to write Gemini nodes to file: %v", err)
 		}
 		log.Printf("Exported Gemini nodes to %s", geminiPath)
@@ -206,13 +203,10 @@ func main() {
 	// Export General
 	if len(generalNodes) > 0 {
 		log.Printf("Exporting General nodes...")
-		encoded, err := exporter.ExportBase64(generalNodes, expOptsGeneral)
-		if err != nil {
-			log.Fatalf("Failed to export General nodes to base64: %v", err)
-		}
+		plainText := exporter.ExportPlain(generalNodes, expOptsGeneral)
 
 		generalPath := "output/general-sub.txt"
-		if err := exporter.WriteToFile(generalPath, encoded); err != nil {
+		if err := exporter.WriteToFile(generalPath, plainText); err != nil {
 			log.Fatalf("Failed to write General nodes to file: %v", err)
 		}
 		log.Printf("Exported General nodes to %s", generalPath)
