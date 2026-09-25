@@ -15,7 +15,7 @@
 
 **Gemini NodeGuard** (formerly Gemini Sub Checker) is an automated Go utility designed for users who need reliable and uninterrupted connectivity to Google AI services (such as Gemini and Google AI Studio). It automatically fetches your private proxy subscription links, parses the nodes, and actively probes them using `sing-box` or `xray` to ensure they can connect to Google AI endpoints without hitting annoying geoblocks or authentication false negatives (`HTTP 403 Forbidden`).
 
-The final output is a clean, Base64-encoded subscription list that you can directly import into your favorite proxy clients (v2rayN, V2Box, Clash, etc.).
+The final output is a clean, raw plain-text subscription list (newline-separated) containing direct protocols (like `vless://`) that you can directly import into your favorite proxy clients (v2rayN, V2Box, Hiddify, etc.).
 
 - 🚀 **Dual-Engine Core Support**: Seamless fallback between `sing-box` and `Xray` cores for maximum protocol coverage, including VLESS, VMess, Reality, Shadowsocks, and Trojan.
 - 🎯 **Dedicated Gemini Probing**: Validates connectivity against `gemini.google.com`, `jules.google.com`, and `generativelanguage.googleapis.com` with smart status-code handling.
@@ -32,7 +32,7 @@ The final output is a clean, Base64-encoded subscription list that you can direc
 - 🚀 **High Concurrency**: Test hundreds of nodes in seconds using Go's lightweight goroutines.
 - 🛠️ **Multi-Core Engines**: Supports both `sing-box` and `xray` cores as dialing engines.
 - 🌍 **Cross-Platform**: Native binaries for Windows, macOS, and Linux.
-- 📦 **Clean Base64 Export**: Generates standardized subscription files compatible with all major clients.
+- 📦 **Raw Plain-Text Export**: Exports raw, newline-separated protocol links directly in the output file.
 - 🤖 **CI/CD Ready**: Fully automated via GitHub Actions to continuously update and publish subscriptions.
 
 ---
@@ -73,7 +73,7 @@ If you prefer an auto-updating live URL for your client:
 3. In your repository's **Settings > Secrets and variables > Actions**, add:
    - `GIST_TOKEN`: Your personal access token.
    - `GIST_ID`: The ID of the secret Gist you created.
-4. The GitHub Action will now automatically update your Secret Gist, giving you a private, live URL to subscribe to in your proxy client!
+4. The GitHub Action will now automatically update your Secret Gist, giving you a private, live URL to subscribe to in your proxy client! This direct link will be conveniently printed in the Action's summary page.
 
 #### Option C: Subscribing to the Results (Public Repository)
 If your repository is public, you can add these raw links to your V2Ray client:
@@ -101,10 +101,10 @@ https://raw.githubusercontent.com/<USERNAME>/<REPO>/sub/general-sub.txt
 - **Go 1.22+** installed on your local machine (if building/running locally).
 - **sing-box** or **xray** binary in your system's `$PATH` or specified via CLI flags.
 
-### 1. Windows Desktop GUI
-Download the pre-compiled `gemini-nodeguard-gui-windows-amd64.exe` from the [Releases](https://github.com/pouriyaahmadii/gemini-nodeguard/releases) page.
-- Double click to launch the application.
-- Paste your subscription URLs, click start, and watch the real-time status log!
+### 1. Pre-compiled Binaries
+Download the pre-compiled binaries (e.g., `gemini-nodeguard-windows-amd64.exe`) from the [Releases](https://github.com/pouriyaahmadii/gemini-nodeguard/releases) page.
+- Extract the downloaded archive.
+- Open your terminal or command prompt in the extracted folder and run the executable using the CLI flags (see below).
 
 ### 2. Go CLI
 If you prefer the command line, make sure you have Go 1.22+ installed:
@@ -146,7 +146,7 @@ You can run the checker locally using command-line flags or a configuration JSON
 │   ├── banner/                      # CLI ASCII banner generation
 │   ├── checker/                     # Core probing logic, dialers (sing-box/xray), and downloader
 │   ├── config/                      # Configuration management and config structs
-│   ├── exporter/                    # Base64 encoding, formatting, and file writing
+│   ├── exporter/                    # Plain-text formatting, URI reconstruction, and file writing
 │   ├── fetcher/                     # HTTP fetching for remote subscription links
 │   ├── parser/                      # URI parsing logic (vmess, vless, trojan, ss, ssr)
 │   └── types/                       # Shared models and struct definitions
