@@ -27,6 +27,13 @@ func formatRemark(node *types.ProxyNode, opts ExportOptions) string {
 		prefix = "[Gemini]"
 	}
 
+	// Append feature tags directly to the prefix, e.g., "[Gemini][AI-Studio]"
+	if len(node.Features) > 0 {
+		for _, feature := range node.Features {
+			prefix += feature
+		}
+	}
+
 	if opts.IncludeLatency && node.Latency > 0 {
 		return fmt.Sprintf("%s[%dms] %s", prefix, node.Latency.Milliseconds(), originalRemark)
 	}

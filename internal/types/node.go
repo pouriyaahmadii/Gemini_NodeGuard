@@ -86,6 +86,7 @@ type ProxyNode struct {
 	IsAlive            bool            `json:"is_alive"`
 	IsGeminiCompatible bool            `json:"is_gemini_compatible"`
 	Latency            time.Duration   `json:"latency"`
+	Features           []string        `json:"features"` // e.g. "Gemini", "AI-Studio"
 }
 
 // Validation errors.

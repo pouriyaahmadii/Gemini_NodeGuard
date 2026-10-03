@@ -66,9 +66,9 @@ func TestChecker_CheckAll(t *testing.T) {
 	}
 
 	checker := NewChecker(CheckOptions{
-		Concurrency: 2,
-		Timeout:     2 * time.Second,
-		TargetURLs:  []string{"http://dummy.url"},
+		Concurrency:    2,
+		Timeout:        2 * time.Second,
+		CoreTargetURLs: []string{"http://dummy.url"},
 	}, dialer)
 
 	nodes := []*types.ProxyNode{
@@ -133,9 +133,9 @@ func TestChecker_ContextCancellation(t *testing.T) {
 	}
 
 	checker := NewChecker(CheckOptions{
-		Concurrency: 2,
-		Timeout:     5 * time.Second,
-		TargetURLs:  []string{"http://dummy.url"},
+		Concurrency:    2,
+		Timeout:        5 * time.Second,
+		CoreTargetURLs: []string{"http://dummy.url"},
 	}, dialer)
 
 	nodes := []*types.ProxyNode{

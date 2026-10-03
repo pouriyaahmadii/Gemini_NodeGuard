@@ -61,7 +61,7 @@ func TestProbe(t *testing.T) {
 		{
 			name:       "Timeout / Slow Server Response",
 			statusCode: http.StatusOK,
-			delay:      200 * time.Millisecond,
+			delay:      1100 * time.Millisecond,
 			wantPass:   false, // We will use a smaller context timeout for this test
 			wantAlive:  false,
 		},
@@ -103,18 +103,18 @@ func TestProbe(t *testing.T) {
 
 			targetURL := server.URL
 
-			Probe(ctx, client, node, targetURL)
+			result := Probe(ctx, client, node, targetURL)
 
-			if node.IsGeminiCompatible != tt.wantPass {
-				t.Errorf("Probe() IsGeminiCompatible = %v, want %v", node.IsGeminiCompatible, tt.wantPass)
+			if result.Compatible != tt.wantPass {
+				t.Errorf("Probe() Compatible = %v, want %v", result.Compatible, tt.wantPass)
 			}
 
-			if node.IsAlive != tt.wantAlive {
-				t.Errorf("Probe() IsAlive = %v, want %v", node.IsAlive, tt.wantAlive)
+			if result.IsAlive != tt.wantAlive {
+				t.Errorf("Probe() IsAlive = %v, want %v", result.IsAlive, tt.wantAlive)
 			}
 
-			if node.Latency <= 0 {
-				t.Errorf("Expected Latency to be > 0, got %v", node.Latency)
+			if tt.wantAlive && result.Latency <= 0 {
+				t.Errorf("Expected Latency to be > 0, got %v", result.Latency)
 			}
 		})
 	}

@@ -11,9 +11,10 @@ import (
 
 // CheckOptions configures the behavior of the checker pool.
 type CheckOptions struct {
-	Concurrency int
-	Timeout     time.Duration
-	TargetURLs  []string
+	Concurrency         int
+	Timeout             time.Duration
+	CoreTargetURLs      []string
+	SecondaryTargetURLs []string
 }
 
 // DefaultCheckOptions returns recommended default settings.
@@ -21,9 +22,14 @@ func DefaultCheckOptions() CheckOptions {
 	return CheckOptions{
 		Concurrency: 10,
 		Timeout:     8 * time.Second,
-		TargetURLs: []string{
-			"https://jules.google.com",
+		CoreTargetURLs: []string{
 			"https://gemini.google.com",
+			"https://aistudio.google.com",
+			"https://notebooklm.google.com",
+		},
+		SecondaryTargetURLs: []string{
+			"https://generativelanguage.googleapis.com/v1beta/models",
+			"https://jules.google.com",
 		},
 	}
 }
@@ -42,10 +48,17 @@ func NewChecker(opts CheckOptions, dialers ...NodeDialer) *Checker {
 	if opts.Timeout <= 0 {
 		opts.Timeout = 8 * time.Second
 	}
-	if len(opts.TargetURLs) == 0 {
-		opts.TargetURLs = []string{
-			"https://jules.google.com",
+	if len(opts.CoreTargetURLs) == 0 {
+		opts.CoreTargetURLs = []string{
 			"https://gemini.google.com",
+			"https://aistudio.google.com",
+			"https://notebooklm.google.com",
+		}
+	}
+	if len(opts.SecondaryTargetURLs) == 0 {
+		opts.SecondaryTargetURLs = []string{
+			"https://generativelanguage.googleapis.com/v1beta/models",
+			"https://jules.google.com",
 		}
 	}
 	return &Checker{
@@ -121,29 +134,90 @@ func (c *Checker) processNode(ctx context.Context, node *types.ProxyNode) {
 			continue
 		}
 
-		// Test against all target URLs for compatibility.
-		// The node is considered Gemini compatible only if it passes all target URLs.
-		node.IsGeminiCompatible = true
-		for _, url := range c.options.TargetURLs {
-			Probe(probeCtx, client, node, url)
-			if !node.IsGeminiCompatible {
-				break
-			}
+		// Map URLs to feature tags
+		featureMap := map[string]string{
+			"https://aistudio.google.com": "[AI-Studio]",
+			"https://notebooklm.google.com": "[NotebookLM]",
+			"https://jules.google.com": "[Jules]",
+			"https://generativelanguage.googleapis.com/v1beta/models": "[API]",
 		}
+
+		var wg sync.WaitGroup
+		var mu sync.Mutex
+
+		allURLs := append([]string{}, c.options.CoreTargetURLs...)
+		allURLs = append(allURLs, c.options.SecondaryTargetURLs...)
+
+		results := make(map[string]ProbeResult)
+
+		for _, url := range allURLs {
+			wg.Add(1)
+			go func(u string) {
+				defer wg.Done()
+				res := Probe(probeCtx, client, node, u)
+				mu.Lock()
+				results[u] = res
+				mu.Unlock()
+			}(url)
+		}
+
+		wg.Wait()
 
 		if cleanup != nil {
 			cleanup()
 		}
 
-		// If the node is alive but not Gemini compatible, it connected successfully
-		// and got blocked by Google. Fallback is unlikely to help here.
-		// If it's alive and Gemini compatible, we found a good node.
-		// If it's NOT alive, the proxy client (e.g. sing-box) failed to proxy traffic,
-		// so we should fallback to the next dialer (e.g. xray).
-		if node.IsAlive {
-			success = true
-			break
+		// Check if the node is alive (any probe was able to connect)
+		isAlive := false
+		var totalLatency time.Duration
+		var successfulProbes int
+
+		for _, res := range results {
+			if res.IsAlive {
+				isAlive = true
+				totalLatency += res.Latency
+				successfulProbes++
+			}
 		}
+
+		if !isAlive {
+			// If not alive, the proxy client failed to proxy traffic,
+			// try the next dialer.
+			continue
+		}
+
+		success = true
+		node.IsAlive = true
+		if successfulProbes > 0 {
+			node.Latency = totalLatency / time.Duration(successfulProbes)
+		}
+
+		// Tier 1 qualification: Passes at least one Core Gemini Service
+		passedCore := false
+		for _, u := range c.options.CoreTargetURLs {
+			if results[u].Compatible {
+				passedCore = true
+				break
+			}
+		}
+
+		if passedCore {
+			node.IsGeminiCompatible = true
+			// Append feature tags
+			var features []string
+			for _, u := range allURLs {
+				if results[u].Compatible {
+					if tag, exists := featureMap[u]; exists {
+						features = append(features, tag)
+					}
+				}
+			}
+			node.Features = features
+		} else {
+			node.IsGeminiCompatible = false
+		}
+
+		break
 	}
 
 	if !success {
