@@ -27,45 +27,83 @@ var geoblockKeywords = [][]byte{
 	[]byte("not supported in your country"),
 	[]byte("user location is not supported"),
 	[]byte("failed_precondition"),
+	[]byte("country or region"),
+	[]byte("not supported in your region"),
+	[]byte("geographic restriction"),
+	[]byte("access denied"),
+	[]byte("your client does not have permission"),
+	[]byte("that's an error"),
+	[]byte("that’s an error"),
 }
 
-// Probe executes an HTTP GET request to check Gemini compatibility using the provided client.
-func Probe(ctx context.Context, client *http.Client, node *types.ProxyNode, targetURL string) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, targetURL, nil)
-	if err != nil {
-		node.IsGeminiCompatible = false
-		return
+// ProbeResult contains the outcome of a single probe.
+type ProbeResult struct {
+	Compatible bool
+	IsAlive    bool
+	Latency    time.Duration
+}
+
+// Probe executes an HTTP GET request to check endpoint compatibility using the provided client.
+// It includes 1 automatic retry for transient errors.
+func Probe(ctx context.Context, client *http.Client, node *types.ProxyNode, targetURL string) ProbeResult {
+	var result ProbeResult
+	var err error
+	var resp *http.Response
+	var start time.Time
+
+	for attempt := 0; attempt < 2; attempt++ {
+		if attempt > 0 {
+			// Backoff before retry
+			select {
+			case <-ctx.Done():
+				return result
+			case <-time.After(500 * time.Millisecond):
+			}
+		}
+
+		req, reqErr := http.NewRequestWithContext(ctx, http.MethodGet, targetURL, nil)
+		if reqErr != nil {
+			return result
+		}
+
+		req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36")
+		req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
+		req.Header.Set("Accept-Language", "en-US,en;q=0.9")
+		req.Header.Set("Sec-Ch-Ua", `"Chromium";v="128", "Not;A=Brand";v="24", "Google Chrome";v="128"`)
+		req.Header.Set("Sec-Ch-Ua-Mobile", "?0")
+		req.Header.Set("Sec-Ch-Ua-Platform", `"Windows"`)
+		req.Header.Set("Sec-Fetch-Dest", "document")
+		req.Header.Set("Sec-Fetch-Mode", "navigate")
+		req.Header.Set("Sec-Fetch-Site", "none")
+		req.Header.Set("Upgrade-Insecure-Requests", "1")
+
+		start = time.Now()
+		resp, err = client.Do(req)
+		if err == nil {
+			break // Success, don't retry
+		}
 	}
 
-	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36")
-	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
-	req.Header.Set("Accept-Language", "en-US,en;q=0.9")
-	req.Header.Set("Sec-Ch-Ua", `"Chromium";v="128", "Not;A=Brand";v="24", "Google Chrome";v="128"`)
-	req.Header.Set("Sec-Ch-Ua-Mobile", "?0")
-	req.Header.Set("Sec-Ch-Ua-Platform", `"macOS"`)
-
-	start := time.Now()
-	resp, err := client.Do(req)
-	node.Latency = time.Since(start)
+	result.Latency = time.Since(start)
 
 	if err != nil {
 		// Network reset, TLS failure, timeout, etc.
-		node.IsAlive = false
-		node.IsGeminiCompatible = false
-		return
+		result.IsAlive = false
+		result.Compatible = false
+		return result
 	}
 	defer resp.Body.Close()
 
 	// We got an HTTP response, meaning proxy transport works
-	node.IsAlive = true
+	result.IsAlive = true
 
 	// High-performance body inspection
 	bodyBytes, readErr := io.ReadAll(io.LimitReader(resp.Body, 256*1024))
 	if readErr != nil && readErr != io.ErrUnexpectedEOF && readErr != io.EOF {
 		// Read error, might be a broken connection during transfer
-		node.IsGeminiCompatible = false
+		result.Compatible = false
 		log.Printf("[Probe] %s: read body error from %s: %v", node.Server, targetURL, readErr)
-		return
+		return result
 	}
 
 	lowerBody := strings.ToLower(string(bodyBytes))
@@ -74,54 +112,71 @@ func Probe(ctx context.Context, client *http.Client, node *types.ProxyNode, targ
 	isAPI := strings.Contains(targetURL, "generativelanguage.googleapis.com")
 
 	if isAPI {
-		// For API endpoints, check for HTTP >= 400 with specific body content
-		if resp.StatusCode >= 400 && resp.StatusCode < 500 {
-			if strings.Contains(lowerBody, "invalid_argument") ||
-				strings.Contains(lowerBody, "api key") ||
-				strings.Contains(lowerBody, "permission_denied") ||
-				strings.Contains(lowerBody, "unregistered") {
+		// For API endpoints, we have specific acceptance criteria based on user requirements.
+		// Accept HTTP 403 as COMPATIBLE if the JSON body contains "permission_denied", "unregistered", or "method doesn't allow".
+		// Accept HTTP 400 as COMPATIBLE if the JSON body contains "invalid_argument" or "api key not valid".
+		if resp.StatusCode == http.StatusForbidden { // HTTP 403
+			if strings.Contains(lowerBody, "permission_denied") ||
+				strings.Contains(lowerBody, "unregistered") ||
+				strings.Contains(lowerBody, "method doesn't allow") {
 				// Positive confirmation that API is reachable
 				// Check for geoblock keywords
 				for _, kw := range geoblockKeywords {
 					if bytes.Contains(bodyBuf, kw) {
-						node.IsGeminiCompatible = false
+						result.Compatible = false
 						log.Printf("[Probe] %s: API endpoint returned geoblocked keyword for %s", node.Server, targetURL)
-						return
+						return result
 					}
 				}
-				node.IsGeminiCompatible = true
-				return
+				result.Compatible = true
+				return result
+			}
+		} else if resp.StatusCode == http.StatusBadRequest { // HTTP 400
+			if strings.Contains(lowerBody, "invalid_argument") ||
+				strings.Contains(lowerBody, "api key not valid") ||
+				strings.Contains(lowerBody, "api key") {
+				for _, kw := range geoblockKeywords {
+					if bytes.Contains(bodyBuf, kw) {
+						result.Compatible = false
+						log.Printf("[Probe] %s: API endpoint returned geoblocked keyword for %s", node.Server, targetURL)
+						return result
+					}
+				}
+				result.Compatible = true
+				return result
 			}
 		} else if resp.StatusCode == http.StatusOK {
-			node.IsGeminiCompatible = true
-			return
+			result.Compatible = true
+			return result
 		}
 
-		node.IsGeminiCompatible = false
+		result.Compatible = false
 		log.Printf("[Probe] %s: API endpoint incompatible (status: %d, body: %q)", node.Server, resp.StatusCode, string(bodyBytes))
-		return
+		return result
 	}
 
 	// For web endpoints (gemini.google.com, jules.google.com)
-	// If the status is forbidden, too many requests or server error, assume incompatible
+	// If the status is forbidden (403), it's incompatible. Same for 429 or 500+
 	if resp.StatusCode == http.StatusForbidden || resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode >= 500 {
-		node.IsGeminiCompatible = false
+		result.Compatible = false
 		log.Printf("[Probe] %s: web endpoint incompatible due to status code %d from %s", node.Server, resp.StatusCode, targetURL)
-		return
+		return result
 	}
 
-	// For web UI endpoints, check response status for 200 OK or redirect
+	// For web UI endpoints, check response status for 200 OK or redirect (3xx)
 	if resp.StatusCode == http.StatusOK || (resp.StatusCode >= 300 && resp.StatusCode < 400) {
 		for _, kw := range geoblockKeywords {
 			if bytes.Contains(bodyBuf, kw) {
-				node.IsGeminiCompatible = false
+				result.Compatible = false
 				log.Printf("[Probe] %s: geoblocked keyword found for %s", node.Server, targetURL)
-				return
+				return result
 			}
 		}
-		node.IsGeminiCompatible = true
+		result.Compatible = true
 	} else {
-		node.IsGeminiCompatible = false
+		result.Compatible = false
 		log.Printf("[Probe] %s: unexpected status code %d from %s", node.Server, resp.StatusCode, targetURL)
 	}
+
+	return result
 }
