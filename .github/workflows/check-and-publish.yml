@@ -67,14 +67,16 @@ jobs:
             ./gemini-checker -config config.json -singbox ./sing-box -xray ./xray
           fi
 
+      - name: Inspect output
+        run: ls -la output/ || true
+
       - name: Upload Checked Subscriptions
         uses: actions/upload-artifact@v4
         with:
           name: validated-nodes
-          path: |
-            output/gemini-sub.txt
-            output/general-sub.txt
-          retention-days: 1
+          path: output/
+          if-no-files-found: warn
+          retention-days: 7
 
       - name: Output Direct Subscription Links
         if: always()

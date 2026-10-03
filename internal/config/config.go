@@ -27,7 +27,7 @@ func DefaultConfig() *Config {
 		SubURLs:             []string{},
 		CoreTargetURLs:      []string{"https://gemini.google.com", "https://aistudio.google.com", "https://notebooklm.google.com"},
 		SecondaryTargetURLs: []string{"https://generativelanguage.googleapis.com/v1beta/models", "https://jules.google.com"},
-		OutputPath:          "output/gemini.txt",
+		OutputPath:          "output/gemini-sub.txt",
 		Concurrency:         10,
 		Timeout:             8 * time.Second,
 		SingboxPath:         "",
