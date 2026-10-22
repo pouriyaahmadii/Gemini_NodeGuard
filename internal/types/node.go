@@ -69,24 +69,53 @@ type TransportConfig struct {
 
 // ProxyNode represents a generic proxy node with standard configuration.
 type ProxyNode struct {
-	ID                 string          `json:"id"`
-	Remarks            string          `json:"remarks"`
-	Protocol           Protocol        `json:"protocol"`
-	Server             string          `json:"server"`
-	Port               int             `json:"port"`
-	UUID               string          `json:"uuid,omitempty"`     // UUID or Password
-	Cipher             string          `json:"cipher,omitempty"`   // e.g. auto, chacha20-poly1305
-	AlterID            int             `json:"alter_id,omitempty"` // VMess legacy compatibility
-	Flow               string          `json:"flow,omitempty"`     // e.g. xtls-rprx-vision
-	Security           SecurityType    `json:"security"`
-	TLS                TLSConfig       `json:"tls,omitempty"`
-	Reality            RealityConfig   `json:"reality,omitempty"`
-	Transport          TransportConfig `json:"transport,omitempty"`
-	RawURI             string          `json:"raw_uri"`
-	IsAlive            bool            `json:"is_alive"`
-	IsGeminiCompatible bool            `json:"is_gemini_compatible"`
-	Latency            time.Duration   `json:"latency"`
-	Features           []string        `json:"features"` // e.g. "Gemini", "AI-Studio"
+	ID             string                   `json:"id"`
+	Remarks        string                   `json:"remarks"`
+	Protocol       Protocol                 `json:"protocol"`
+	Server         string                   `json:"server"`
+	Port           int                      `json:"port"`
+	UUID           string                   `json:"uuid,omitempty"`     // UUID or Password
+	Cipher         string                   `json:"cipher,omitempty"`   // e.g. auto, chacha20-poly1305
+	AlterID        int                      `json:"alter_id,omitempty"` // VMess legacy compatibility
+	Flow           string                   `json:"flow,omitempty"`     // e.g. xtls-rprx-vision
+	Security       SecurityType             `json:"security"`
+	TLS            TLSConfig                `json:"tls,omitempty"`
+	Reality        RealityConfig            `json:"reality,omitempty"`
+	Transport      TransportConfig          `json:"transport,omitempty"`
+	RawURI         string                   `json:"raw_uri"`
+	IsAlive        bool                     `json:"is_alive"`
+	ServiceResults map[string]ServiceResult `json:"service_results"`
+	Latency        time.Duration            `json:"latency"`
+}
+
+// Classification represents the structured outcome of a service probe.
+type Classification string
+
+const (
+	ClassificationConfirmedCompatible    Classification = "confirmed_compatible"
+	ClassificationGeneralAlive           Classification = "general_alive"
+	ClassificationLikelyRegionRestricted Classification = "likely_region_restricted"
+	ClassificationAuthenticationRequired Classification = "authentication_required"
+	ClassificationAccessDenied           Classification = "access_denied"
+	ClassificationRateLimited            Classification = "rate_limited"
+	ClassificationServiceError           Classification = "service_error"
+	ClassificationTransportError         Classification = "transport_error"
+	ClassificationInconclusive           Classification = "inconclusive"
+)
+
+// ServiceResult holds the evidence and classification for a specific service.
+type ServiceResult struct {
+	Classification Classification `json:"classification"`
+	HTTPStatus     int            `json:"http_status,omitempty"`
+	Latency        time.Duration  `json:"latency"`
+	Diagnostic     string         `json:"diagnostic,omitempty"`
+}
+
+// NewProxyNode creates a new ProxyNode with an initialized ServiceResults map.
+func NewProxyNode() *ProxyNode {
+	return &ProxyNode{
+		ServiceResults: make(map[string]ServiceResult),
+	}
 }
 
 // Validation errors.

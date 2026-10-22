@@ -27,9 +27,14 @@ func TestParseURI(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name:    "Shadowsocks not yet implemented/unsupported by URI parser currently", // Or modify logic to support it, but the plan only says 3 parsers
+			name:    "Shadowsocks valid SIP002 Base64",
 			uri:     "ss://YWVzLTEyOC1nY206dGVzdA==@192.168.100.1:8888#Example",
-			wantErr: true,
+			wantErr: false,
+		},
+		{
+			name:    "Shadowsocks valid Plaintext fallback",
+			uri:     "ss://aes-128-gcm:test@192.168.100.1:8888#Example",
+			wantErr: false,
 		},
 		{
 			name:    "Empty",

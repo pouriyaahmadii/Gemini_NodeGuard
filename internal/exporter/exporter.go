@@ -27,17 +27,32 @@ func formatRemark(node *types.ProxyNode, opts ExportOptions) string {
 		prefix = "[Gemini]"
 	}
 
-	// Append feature tags directly to the prefix, e.g., "[Gemini][AI-Studio]"
-	if len(node.Features) > 0 {
-		for _, feature := range node.Features {
-			prefix += feature
-		}
-	}
-
 	if opts.IncludeLatency && node.Latency > 0 {
 		return fmt.Sprintf("%s[%dms] %s", prefix, node.Latency.Milliseconds(), originalRemark)
 	}
 	return fmt.Sprintf("%s %s", prefix, originalRemark)
+}
+
+// ReconstructShadowsocks reconstructs an ss:// URI.
+func ReconstructShadowsocks(node *types.ProxyNode, remark string) string {
+	// Format: ss://base64(method:password)@hostname:port#remarks
+	cred := node.Cipher + ":" + node.UUID
+	b64Cred := base64.URLEncoding.EncodeToString([]byte(cred))
+
+	// Remove padding = per SIP002 standard recommendations (though often tolerated)
+	b64Cred = strings.TrimRight(b64Cred, "=")
+
+	u := &url.URL{
+		Scheme: "ss",
+		User:   url.User(b64Cred),
+		Host:   fmt.Sprintf("%s:%d", node.Server, node.Port),
+	}
+
+	baseStr := u.String()
+	if remark != "" {
+		return baseStr + "#" + url.QueryEscape(remark)
+	}
+	return baseStr
 }
 
 // ReconstructVMess reconstructs a vmess:// URI.
@@ -157,6 +172,8 @@ func ReconstructURI(node *types.ProxyNode, opts ExportOptions) (string, error) {
 		return ReconstructVMess(node, remark)
 	case types.ProtocolVless, types.ProtocolTrojan:
 		return ReconstructStandard(node, remark), nil
+	case types.ProtocolShadowsocks:
+		return ReconstructShadowsocks(node, remark), nil
 	default:
 		// For unsupported protocols, just fallback to raw if we must, or standard
 		// For simplicity, fallback to ReconstructStandard for now

@@ -71,10 +71,9 @@ func parseVMess(rawURI string) (*types.ProxyNode, error) {
 		return nil, fmt.Errorf("failed to unmarshal vmess json: %w", err)
 	}
 
-	node := &types.ProxyNode{
-		Protocol: types.ProtocolVmess,
-		RawURI:   rawURI,
-	}
+	node := types.NewProxyNode()
+	node.Protocol = types.ProtocolVmess
+	node.RawURI = rawURI
 
 	node.Server = v.Add
 	node.UUID = v.ID

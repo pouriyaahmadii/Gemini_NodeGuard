@@ -30,6 +30,9 @@ func BuildSingboxOutbound(node *types.ProxyNode) (map[string]any, error) {
 		}
 	case types.ProtocolTrojan:
 		out["password"] = node.UUID
+	case types.ProtocolShadowsocks:
+		out["method"] = node.Cipher
+		out["password"] = node.UUID
 	default:
 		return nil, fmt.Errorf("unsupported protocol for sing-box outbound: %s", node.Protocol)
 	}
@@ -154,6 +157,16 @@ func BuildXrayOutbound(node *types.ProxyNode) (map[string]any, error) {
 		servers := map[string]any{
 			"address":  node.Server,
 			"port":     node.Port,
+			"password": node.UUID,
+		}
+		settings["servers"] = []map[string]any{servers}
+
+	case types.ProtocolShadowsocks:
+		out["protocol"] = "shadowsocks"
+		servers := map[string]any{
+			"address":  node.Server,
+			"port":     node.Port,
+			"method":   node.Cipher,
 			"password": node.UUID,
 		}
 		settings["servers"] = []map[string]any{servers}

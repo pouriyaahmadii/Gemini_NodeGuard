@@ -1,1 +1,42 @@
+# Binaries
 /checker
+/gemini-nodeguard
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+gemini-nodeguard-*
+gemini-checker
+dist/
+build/
+output/
+sing-box
+xray
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Dependency directories (remove the comment below to include it)
+# vendor/
+
+# Go workspace file
+go.work
+go.work.sum
+
+# Local environment variables
+.env
+.env.local
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Config
+config.json
+config.local.json

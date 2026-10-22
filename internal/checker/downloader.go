@@ -63,6 +63,7 @@ func ResolveSingbox(customPath string) (string, error) {
 	log.Printf("sing-box downloaded successfully to %s", cachedPath)
 	return cachedPath, nil
 }
+
 // ResolveXray resolves the path to the xray binary, downloading it if necessary.
 func ResolveXray(customPath string) (string, error) {
 	// 1. Custom flag path
