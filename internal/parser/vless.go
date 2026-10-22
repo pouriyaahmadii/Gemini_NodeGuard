@@ -21,10 +21,9 @@ func parseVLESS(rawURI string) (*types.ProxyNode, error) {
 		return nil, fmt.Errorf("failed to parse vless uri: %w", err)
 	}
 
-	node := &types.ProxyNode{
-		Protocol: types.ProtocolVless,
-		RawURI:   rawURI,
-	}
+	node := types.NewProxyNode()
+	node.Protocol = types.ProtocolVless
+	node.RawURI = rawURI
 
 	if u.User != nil {
 		node.UUID = u.User.Username()

@@ -9,30 +9,28 @@ import (
 
 // Config represents the application configuration.
 type Config struct {
-	SubURLs             []string      `json:"sub_urls"`
-	CoreTargetURLs      []string      `json:"core_target_urls"`
-	SecondaryTargetURLs []string      `json:"secondary_target_urls"`
-	OutputPath          string        `json:"output_path"`
-	Concurrency         int           `json:"concurrency"`
-	Timeout             time.Duration `json:"-"`
-	TimeoutStr          string        `json:"timeout"`
-	SingboxPath         string        `json:"singbox_path"`
-	XrayPath            string        `json:"xray_path"`
-	RemarkPrefix        string        `json:"remark_prefix"`
+	SubURLs      []string      `json:"sub_urls"`
+	Services     []string      `json:"services"`
+	OutputDir    string        `json:"output_dir"`
+	Concurrency  int           `json:"concurrency"`
+	Timeout      time.Duration `json:"-"`
+	TimeoutStr   string        `json:"timeout"`
+	SingboxPath  string        `json:"singbox_path"`
+	XrayPath     string        `json:"xray_path"`
+	RemarkPrefix string        `json:"remark_prefix"`
 }
 
 // DefaultConfig returns a Config with sensible default values.
 func DefaultConfig() *Config {
 	return &Config{
-		SubURLs:             []string{},
-		CoreTargetURLs:      []string{"https://gemini.google.com", "https://aistudio.google.com", "https://notebooklm.google.com"},
-		SecondaryTargetURLs: []string{"https://generativelanguage.googleapis.com/v1beta/models", "https://jules.google.com"},
-		OutputPath:          "output/gemini.txt",
-		Concurrency:         10,
-		Timeout:             8 * time.Second,
-		SingboxPath:         "",
-		XrayPath:            "",
-		RemarkPrefix:        "[Gemini]",
+		SubURLs:      []string{},
+		Services:     []string{"search", "gemini", "aistudio", "notebooklm", "jules", "ai_api"},
+		OutputDir:    "output",
+		Concurrency:  10,
+		Timeout:      8 * time.Second,
+		SingboxPath:  "",
+		XrayPath:     "",
+		RemarkPrefix: "", // Let the exporter determine the prefix based on service name
 	}
 }
 

@@ -21,10 +21,9 @@ func parseTrojan(rawURI string) (*types.ProxyNode, error) {
 		return nil, fmt.Errorf("failed to parse trojan uri: %w", err)
 	}
 
-	node := &types.ProxyNode{
-		Protocol: types.ProtocolTrojan,
-		RawURI:   rawURI,
-	}
+	node := types.NewProxyNode()
+	node.Protocol = types.ProtocolTrojan
+	node.RawURI = rawURI
 
 	if u.User != nil {
 		node.UUID = u.User.Username()

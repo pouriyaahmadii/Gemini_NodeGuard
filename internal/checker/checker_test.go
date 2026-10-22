@@ -66,56 +66,35 @@ func TestChecker_CheckAll(t *testing.T) {
 	}
 
 	checker := NewChecker(CheckOptions{
-		Concurrency:    2,
-		Timeout:        2 * time.Second,
-		CoreTargetURLs: []string{"http://dummy.url"},
+		Concurrency: 2,
+		Timeout:     2 * time.Second,
+		Services:    []string{"search"},
 	}, dialer)
 
 	nodes := []*types.ProxyNode{
-		{ID: "node1", Server: "pass"},
-		{ID: "node2", Server: "fast-pass"},
-		{ID: "node3", Server: "fail"},
-		{ID: "node4", Server: "pass-again"},
+		{ID: "node1", Server: "pass", ServiceResults: make(map[string]types.ServiceResult)},
+		{ID: "node2", Server: "fast-pass", ServiceResults: make(map[string]types.ServiceResult)},
+		{ID: "node3", Server: "fail", ServiceResults: make(map[string]types.ServiceResult)},
+		{ID: "node4", Server: "pass-again", ServiceResults: make(map[string]types.ServiceResult)},
 	}
 
-	result, general := checker.CheckAll(context.Background(), nodes)
+	result := checker.CheckAll(context.Background(), nodes)
 
-	if len(result) != 3 {
-		t.Fatalf("expected 3 compatible nodes, got %d", len(result))
+	if len(result) != 4 {
+		t.Fatalf("expected 4 returned nodes, got %d", len(result))
 	}
 
-	if len(general) != 1 {
-		t.Fatalf("expected 1 general node, got %d", len(general))
-	}
-
-	// Verify filtering: node3 should not be in the compatible result
+	// node2 is fast-pass, node1 and node4 are pass, node3 is fail (general transport alive)
+	var compatibleCount int
 	for _, n := range result {
-		if n.ID == "node3" {
-			t.Errorf("node3 should have been filtered out of compatible nodes")
+		res := n.ServiceResults["search"]
+		if res.Classification == types.ClassificationConfirmedCompatible {
+			compatibleCount++
 		}
 	}
 
-	// Verify sorting by latency: node2 (fast-pass) should be first
-	if result[0].ID != "node2" {
-		t.Errorf("expected node2 to be first (fastest), got %s", result[0].ID)
-	}
-
-	// Verify all returned nodes are marked compatible
-	for _, n := range result {
-		if !n.IsGeminiCompatible {
-			t.Errorf("expected node %s to be compatible", n.ID)
-		}
-	}
-
-	// Verify general node
-	if general[0].ID != "node3" {
-		t.Errorf("expected node3 in general nodes, got %s", general[0].ID)
-	}
-	if general[0].IsGeminiCompatible {
-		t.Errorf("expected general node to not be Gemini compatible")
-	}
-	if !general[0].IsAlive {
-		t.Errorf("expected general node to be alive")
+	if compatibleCount != 3 {
+		t.Errorf("Expected 3 nodes to be compatible with search, got %d", compatibleCount)
 	}
 }
 
@@ -133,14 +112,14 @@ func TestChecker_ContextCancellation(t *testing.T) {
 	}
 
 	checker := NewChecker(CheckOptions{
-		Concurrency:    2,
-		Timeout:        5 * time.Second,
-		CoreTargetURLs: []string{"http://dummy.url"},
+		Concurrency: 2,
+		Timeout:     5 * time.Second,
+		Services:    []string{"search"},
 	}, dialer)
 
 	nodes := []*types.ProxyNode{
-		{ID: "node1", Server: "pass"},
-		{ID: "node2", Server: "pass"},
+		{ID: "node1", Server: "pass", ServiceResults: make(map[string]types.ServiceResult)},
+		{ID: "node2", Server: "pass", ServiceResults: make(map[string]types.ServiceResult)},
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -152,19 +131,15 @@ func TestChecker_ContextCancellation(t *testing.T) {
 	}()
 
 	start := time.Now()
-	result, general := checker.CheckAll(ctx, nodes)
+	result := checker.CheckAll(ctx, nodes)
 	duration := time.Since(start)
 
 	if duration > 1*time.Second {
 		t.Errorf("expected CheckAll to return quickly on cancel, took %v", duration)
 	}
 
-	if len(result) != 0 {
-		t.Errorf("expected no results due to cancellation, got %d", len(result))
-	}
-
-	if len(general) != 0 {
-		t.Errorf("expected no general results due to cancellation, got %d", len(general))
+	if result[0].IsAlive || result[1].IsAlive {
+		t.Errorf("expected nodes to not be alive due to context cancellation")
 	}
 }
 

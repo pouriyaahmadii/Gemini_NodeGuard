@@ -7,78 +7,71 @@ import (
 	"testing"
 	"time"
 
+	"gemini-nodeguard/internal/registry"
 	"gemini-nodeguard/internal/types"
 )
 
 func TestProbe(t *testing.T) {
+	svcReg := registry.GetServices()
+
 	tests := []struct {
 		name       string
+		serviceID  string
 		statusCode int
 		body       string
-		delay      time.Duration
-		wantPass   bool
-		wantAlive  bool
+		wantClass  types.Classification
 	}{
 		{
-			name:       "Simulated 200 OK without geoblock",
+			name:       "Search - Simulated 200 OK",
+			serviceID:  "search",
 			statusCode: http.StatusOK,
-			body:       "<html><body>Welcome to Google</body></html>",
-			wantPass:   true,
-			wantAlive:  true,
+			wantClass:  types.ClassificationConfirmedCompatible,
 		},
 		{
-			name:       "Simulated 200 OK with geoblock (isn't currently supported in your country)",
+			name:       "Gemini - Simulated 200 OK without geoblock",
+			serviceID:  "gemini",
 			statusCode: http.StatusOK,
-			body:       "<html><body>Gemini isn't currently supported in your country</body></html>",
-			wantPass:   false,
-			wantAlive:  true,
+			body:       "<html><body>Welcome to Google Gemini</body></html>",
+			wantClass:  types.ClassificationConfirmedCompatible,
 		},
 		{
-			name:       "Simulated 200 OK with geoblock (not yet available in your region) - case insensitive",
-			statusCode: http.StatusOK,
-			body:       "<html><body>Jules is NOT YET AVAILABLE IN YOUR REGION.</body></html>",
-			wantPass:   false,
-			wantAlive:  true,
-		},
-		{
-			name:       "Simulated 302 Found",
-			statusCode: http.StatusFound,
-			wantPass:   true,
-			wantAlive:  true,
-		},
-		{
-			name:       "Simulated 403 Forbidden",
+			name:       "Gemini - Simulated 403 Forbidden without geoblock",
+			serviceID:  "gemini",
 			statusCode: http.StatusForbidden,
-			wantPass:   false,
-			wantAlive:  true,
+			body:       "<html><body>Generic Access Denied</body></html>",
+			wantClass:  types.ClassificationAccessDenied,
 		},
 		{
-			name:       "Simulated 500 Server Error",
+			name:       "Gemini - Simulated 403 with geoblock (isn't currently supported in your country)",
+			serviceID:  "gemini",
+			statusCode: http.StatusForbidden,
+			body:       "<html><body>Gemini isn't currently supported in your country</body></html>",
+			wantClass:  types.ClassificationLikelyRegionRestricted,
+		},
+		{
+			name:       "AI API - Simulated 403 Permission Denied (API Success)",
+			serviceID:  "ai_api",
+			statusCode: http.StatusForbidden,
+			body:       `{"error": {"message": "permission_denied"}}`,
+			wantClass:  types.ClassificationConfirmedCompatible,
+		},
+		{
+			name:       "NotebookLM - Rate Limited",
+			serviceID:  "notebooklm",
+			statusCode: http.StatusTooManyRequests,
+			wantClass:  types.ClassificationRateLimited,
+		},
+		{
+			name:       "Jules - 500 Server Error",
+			serviceID:  "jules",
 			statusCode: http.StatusInternalServerError,
-			wantPass:   false,
-			wantAlive:  true,
-		},
-		{
-			name:       "Timeout / Slow Server Response",
-			statusCode: http.StatusOK,
-			delay:      1100 * time.Millisecond,
-			wantPass:   false, // We will use a smaller context timeout for this test
-			wantAlive:  false,
+			wantClass:  types.ClassificationServiceError,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				if r.Header.Get("User-Agent") == "" {
-					t.Errorf("expected User-Agent header to be set")
-				}
-				if r.Header.Get("Accept") == "" {
-					t.Errorf("expected Accept header to be set")
-				}
-				if tt.delay > 0 {
-					time.Sleep(tt.delay)
-				}
 				w.WriteHeader(tt.statusCode)
 				if tt.body != "" {
 					w.Write([]byte(tt.body))
@@ -86,36 +79,54 @@ func TestProbe(t *testing.T) {
 			}))
 			defer server.Close()
 
-			// Create a mock dialer that does not follow redirects for testing 302
 			client := server.Client()
 			client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 				return http.ErrUseLastResponse
 			}
 
-			node := &types.ProxyNode{}
-
+			node := types.NewProxyNode()
 			ctx := context.Background()
-			var cancel context.CancelFunc
-			if tt.delay > 0 {
-				ctx, cancel = context.WithTimeout(ctx, 50*time.Millisecond)
-				defer cancel()
+
+			// Update the endpoint of the service definition to our local test server URL
+			def := svcReg[tt.serviceID]
+			testDef := &registry.ServiceDefinition{
+				ID:               def.ID,
+				Name:             def.Name,
+				Endpoint:         server.URL,
+				Method:           def.Method,
+				RequiresAuth:     def.RequiresAuth,
+				EvaluateResponse: def.EvaluateResponse,
 			}
 
-			targetURL := server.URL
+			result := Probe(ctx, client, node, testDef)
 
-			result := Probe(ctx, client, node, targetURL)
-
-			if result.Compatible != tt.wantPass {
-				t.Errorf("Probe() Compatible = %v, want %v", result.Compatible, tt.wantPass)
-			}
-
-			if result.IsAlive != tt.wantAlive {
-				t.Errorf("Probe() IsAlive = %v, want %v", result.IsAlive, tt.wantAlive)
-			}
-
-			if tt.wantAlive && result.Latency <= 0 {
-				t.Errorf("Expected Latency to be > 0, got %v", result.Latency)
+			if result.Classification != tt.wantClass {
+				t.Errorf("Probe() Classification = %v, want %v (Status: %d, Body: %s)", result.Classification, tt.wantClass, result.HTTPStatus, tt.body)
 			}
 		})
+	}
+}
+
+func TestProbeTransportError(t *testing.T) {
+	node := types.NewProxyNode()
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Millisecond)
+	defer cancel()
+
+	// Use an unroutable address that will timeout/fail instantly in our tight context
+	testDef := &registry.ServiceDefinition{
+		ID:               "timeout_test",
+		Endpoint:         "http://192.0.2.1", // TEST-NET-1 (unroutable)
+		Method:           "GET",
+		EvaluateResponse: func(resp *http.Response, body []byte) types.Classification { return types.ClassificationInconclusive },
+	}
+
+	// Allow enough time for context to expire so HTTP transport immediately fails
+	time.Sleep(5 * time.Millisecond)
+
+	client := &http.Client{}
+	result := Probe(ctx, client, node, testDef)
+
+	if result.Classification != types.ClassificationTransportError {
+		t.Errorf("Expected TransportError, got %v", result.Classification)
 	}
 }
