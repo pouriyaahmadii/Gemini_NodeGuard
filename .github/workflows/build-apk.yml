@@ -18,6 +18,7 @@ jobs:
           java-version: '17'
 
       - name: Build APK with Gradle
+        working-directory: gemini-nodeguard-app
         run: |
           chmod +x gradlew
           ./gradlew assembleRelease
@@ -26,4 +27,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Gemini-NodeGuard-Release-APK
-          path: app/build/outputs/apk/release/app-release.apk
+          path: gemini-nodeguard-app/app/build/outputs/apk/release/app-release.apk
