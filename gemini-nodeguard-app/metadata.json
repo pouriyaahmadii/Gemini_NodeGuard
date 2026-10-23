@@ -1,0 +1,6 @@
+{
+  "name": "Gemini NodeGuard",
+  "description": "High-end native Android network telemetry, proxy validator, and geo-unblocking diagnostic suite for Google Gemini AI endpoints.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

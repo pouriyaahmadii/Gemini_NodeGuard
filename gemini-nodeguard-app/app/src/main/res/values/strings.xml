@@ -1,0 +1,58 @@
+<resources>
+    <string name="app_name">Gemini NodeGuard</string>
+    <string name="nav_shield">Shield</string>
+    <string name="nav_scanner">Scanner</string>
+    <string name="nav_cloud_core">Cloud &amp; Core</string>
+    <string name="nav_appsec_lab">AppSec Lab</string>
+    <string name="header_subtitle">SING-BOX / XRAY TELEMETRY &amp; GEMINI PROBE</string>
+    <string name="btn_start_probe">START GEMINI PROBE</string>
+    <string name="btn_probing_active">EXECUTING 4-STAGE PROBE…</string>
+    <string name="btn_reverify_probe">RE-RUN GEMINI PROBE</string>
+    <string name="sim_mode_label">TELEMETRY SCENARIO</string>
+    <string name="sim_clean_node">Clean Node</string>
+    <string name="sim_geo_blocked">403 Geo-Blocked</string>
+    <string name="sim_high_latency">High Latency</string>
+    <string name="sim_timeout">Timeout</string>
+    <string name="pipeline_section_title">4-STAGE MULTI-TIERED VALIDATION PIPELINE</string>
+    <string name="bento_section_title">LIVE EDGE TELEMETRY &amp; SPARKLINE</string>
+    <string name="bento_ttft_label">TTFT (FIRST TOKEN)</string>
+    <string name="bento_jitter_label">PING JITTER</string>
+    <string name="bento_exit_ip_label">EXIT IP / ASN</string>
+    <string name="bento_sparkline_title">REAL-TIME RTT SPARKLINE (60S WINDOW)</string>
+    <string name="cd_shield_radar">Interactive Cyber Shield Radar Gauge. Tap to start Gemini endpoint probe.</string>
+    <string name="cd_redact_toggle">Toggle IP and endpoint log redaction</string>
+
+    <!-- Phase 2: Batch Node Scanner Strings -->
+    <string name="scanner_header_title">Batch Node Scanner</string>
+    <string name="scanner_header_subtitle">SEMAPHORE COROUTINE ENGINE • MULTI-PROTOCOL URI PARSER</string>
+    <string name="btn_import_nodes">Import URIs</string>
+    <string name="btn_load_15_sample_nodes">Load 15 Realistic Mixed Nodes</string>
+    <string name="btn_start_batch_scan">START BATCH SCAN</string>
+    <string name="btn_stop_batch_scan">ABORT SCAN</string>
+    <string name="label_concurrency_limit">CONCURRENCY LIMIT (SEMAPHORE)</string>
+    <string name="label_probe_timeout">PROBE SOCKET TIMEOUT</string>
+    <string name="fab_export_verified">Export Verified (200 OK)</string>
+    <string name="dialog_import_title">Import Proxy URIs / Subscription</string>
+    <string name="dialog_import_hint">Paste vless://, vmess://, trojan://, hysteria2://, tuic:// links (one per line) or Base64 subscription payload…</string>
+    <string name="action_inspect_telemetry">Inspect Telemetry</string>
+    <string name="action_copy_uri">Copy Clean URI</string>
+    <string name="action_export_client">Sing-box / v2rayNG</string>
+
+    <!-- Phase 3: Cloud Sync, Sing-box Builder & Native Go/Rust Bridge Strings -->
+    <string name="cloud_core_header_title">Cloud Sync &amp; Core Bridge</string>
+    <string name="cloud_core_header_subtitle">GITHUB CI/CD GIST SYNC • SING-BOX JSON • GO/RUST JNI</string>
+    <string name="cloud_sync_card_title">GITHUB ACTIONS &amp; SECRET GIST SYNC</string>
+    <string name="btn_sync_cloud_nodes">SYNC VERIFIED NODES FROM CLOUD</string>
+    <string name="btn_syncing_cloud_nodes">PULLING ARTIFACT &amp; VERIFYING SIGNATURES…</string>
+    <string name="singbox_builder_card_title">SING-BOX 1.10+ OUTBOUND &amp; ROUTING BUILDER</string>
+    <string name="native_bridge_card_title">NATIVE GO (LIBBOX) &amp; RUST FFI BRIDGE</string>
+
+    <!-- Phase 5: AppSec Lab, Fuzzing Suite & OWASP Mobile Top 10 Strings -->
+    <string name="appsec_header_title">AppSec Lab &amp; Fuzzing Suite</string>
+    <string name="appsec_header_subtitle">LIVE EXPLOIT FUZZER • PENTEST SANDBOX • OWASP M1–M10</string>
+    <string name="btn_run_fuzzing_suite">RUN FULL SECURITY &amp; FUZZING SUITE</string>
+    <string name="btn_running_fuzzing_suite">EXECUTING 5-VECTOR ASSERTION HARNESS…</string>
+    <string name="pentest_sandbox_title">INTERACTIVE PENETRATION TESTING SANDBOX</string>
+    <string name="owasp_matrix_title">OWASP MOBILE TOP 10 (M1–M10) COMPLIANCE MATRIX</string>
+    <string name="btn_copy_security_report">COPY FULL MARKDOWN SECURITY AUDIT REPORT</string>
+</resources>
