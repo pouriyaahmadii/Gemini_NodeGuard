@@ -2,6 +2,7 @@ package checker
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -11,17 +12,23 @@ import (
 
 // CheckOptions configures the behavior of the checker pool.
 type CheckOptions struct {
-	Concurrency int
-	Timeout     time.Duration
-	Services    []string
+	Concurrency         int
+	ProcessStartTimeout time.Duration
+	ProbeTimeout        time.Duration
+	NodeTimeout         time.Duration
+	ConfirmCount        int
+	Services            []string
 }
 
 // DefaultCheckOptions returns recommended default settings.
 func DefaultCheckOptions() CheckOptions {
 	return CheckOptions{
-		Concurrency: 10,
-		Timeout:     8 * time.Second,
-		Services:    []string{"search", "gemini", "aistudio", "notebooklm", "jules", "ai_api"},
+		Concurrency:         10,
+		ProcessStartTimeout: 5 * time.Second,
+		ProbeTimeout:        8 * time.Second,
+		NodeTimeout:         25 * time.Second,
+		ConfirmCount:        1,
+		Services:            []string{"search", "gemini", "aistudio", "notebooklm", "jules", "ai_api"},
 	}
 }
 
@@ -37,8 +44,19 @@ func NewChecker(opts CheckOptions, dialers ...NodeDialer) *Checker {
 	if opts.Concurrency <= 0 {
 		opts.Concurrency = 10
 	}
-	if opts.Timeout <= 0 {
-		opts.Timeout = 8 * time.Second
+	if opts.ProcessStartTimeout <= 0 {
+		opts.ProcessStartTimeout = 5 * time.Second
+	}
+	if opts.ProbeTimeout <= 0 {
+		opts.ProbeTimeout = 8 * time.Second
+	}
+	if opts.NodeTimeout <= 0 {
+		opts.NodeTimeout = 25 * time.Second
+	}
+	if opts.ConfirmCount <= 0 {
+		opts.ConfirmCount = 1
+	} else if opts.ConfirmCount > 3 {
+		opts.ConfirmCount = 3
 	}
 
 	// Ensure at least "search" is present for general connectivity if empty
@@ -90,8 +108,8 @@ func (c *Checker) CheckAll(ctx context.Context, nodes []*types.ProxyNode) []*typ
 }
 
 func (c *Checker) processNode(ctx context.Context, node *types.ProxyNode) {
-	probeCtx, cancel := context.WithTimeout(ctx, c.options.Timeout)
-	defer cancel()
+	nodeCtx, cancelNode := context.WithTimeout(ctx, c.options.NodeTimeout)
+	defer cancelNode()
 
 	var success bool
 
@@ -104,7 +122,10 @@ func (c *Checker) processNode(ctx context.Context, node *types.ProxyNode) {
 	}
 
 	for _, dialer := range c.dialers {
-		client, cleanup, err := dialer.NewHTTPClient(probeCtx, node)
+		startCtx, cancelStart := context.WithTimeout(nodeCtx, c.options.ProcessStartTimeout)
+		client, cleanup, err := dialer.NewHTTPClient(startCtx, node)
+		cancelStart()
+
 		if err != nil {
 			// If dialing fails, try the next dialer
 			continue
@@ -119,10 +140,46 @@ func (c *Checker) processNode(ctx context.Context, node *types.ProxyNode) {
 			wg.Add(1)
 			go func(def *registry.ServiceDefinition) {
 				defer wg.Done()
-				res := Probe(probeCtx, client, node, def)
+
+				var lastRes types.ServiceResult
+				var totalLatency time.Duration
+				successes := 0
+
+				for i := 0; i < c.options.ConfirmCount; i++ {
+					probeCtx, cancelProbe := context.WithTimeout(nodeCtx, c.options.ProbeTimeout)
+					res := Probe(probeCtx, client, node, def)
+					cancelProbe()
+
+					if res.Classification == types.ClassificationConfirmedCompatible {
+						successes++
+						totalLatency += res.Latency
+					} else {
+						lastRes = res
+						break // stop confirming if it failed
+					}
+				}
+
 				mu.Lock()
-				results[def.ID] = res
-				mu.Unlock()
+				defer mu.Unlock()
+
+				if successes == c.options.ConfirmCount {
+					// All confirmations succeeded
+					results[def.ID] = types.ServiceResult{
+						Classification: types.ClassificationConfirmedCompatible,
+						Latency:        totalLatency / time.Duration(successes),
+						HTTPStatus:     200, // Best effort representation
+					}
+				} else if successes > 0 {
+					// Flaky node
+					results[def.ID] = types.ServiceResult{
+						Classification: types.ClassificationInconclusive,
+						Diagnostic:     fmt.Sprintf("unstable: %d/%d probes succeeded", successes, c.options.ConfirmCount),
+						Latency:        totalLatency / time.Duration(successes),
+					}
+				} else {
+					// First probe failed
+					results[def.ID] = lastRes
+				}
 			}(svc)
 		}
 

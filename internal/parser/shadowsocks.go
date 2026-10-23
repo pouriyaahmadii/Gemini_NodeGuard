@@ -40,7 +40,12 @@ func parseShadowsocks(rawURI string) (*types.ProxyNode, error) {
 
 		if err == nil {
 			// Decoded should look like method:password@hostname:port
-			return parseShadowsocks("ss://" + string(decoded))
+			rem := ""
+			idx := strings.Index(rawURI, "#")
+			if idx != -1 {
+				rem = rawURI[idx:]
+			}
+			return parseShadowsocks("ss://" + string(decoded) + rem)
 		}
 
 		return nil, fmt.Errorf("failed to parse shadowsocks uri: %w", err)
@@ -104,6 +109,15 @@ func parseShadowsocks(rawURI string) (*types.ProxyNode, error) {
 			node.Remarks = u.Fragment
 		} else {
 			node.Remarks = remarks
+		}
+	}
+
+	pluginStr := u.Query().Get("plugin")
+	if pluginStr != "" {
+		parts := strings.SplitN(pluginStr, ";", 2)
+		node.Plugin = parts[0]
+		if len(parts) == 2 {
+			node.PluginOpts = parts[1]
 		}
 	}
 

@@ -128,7 +128,7 @@ func TestProxyNode_DedupKey(t *testing.T) {
 				Port:     443,
 				UUID:     "123",
 			},
-			want: "vless://example.com:443?id=123",
+			want: "vless://example.com:443?uuid=123",
 		},
 		{
 			name: "with all deduplication fields",
@@ -145,7 +145,7 @@ func TestProxyNode_DedupKey(t *testing.T) {
 					Path: "/path",
 				},
 			},
-			want: "trojan://example.com:443?id=pass&path=%2Fpath&sni=sni.com&type=ws",
+			want: "trojan://example.com:443?path=%2Fpath&sni=sni.com&type=ws&uuid=pass",
 		},
 		{
 			name: "with empty strings omitted",
@@ -162,7 +162,7 @@ func TestProxyNode_DedupKey(t *testing.T) {
 					Path: "",
 				},
 			},
-			want: "vmess://server:80?id=uuid&type=tcp",
+			want: "vmess://server:80?type=tcp&uuid=uuid",
 		},
 	}
 

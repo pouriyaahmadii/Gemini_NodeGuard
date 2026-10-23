@@ -123,7 +123,6 @@ func TestFetcher_FetchAll(t *testing.T) {
 
 		fetcher := NewFetcher(FetchOptions{})
 		lines, err := fetcher.FetchAll(context.Background(), []string{tsSuccess.URL, tsFail.URL})
-
 		if err != nil {
 			t.Fatalf("Expected no error for partial success, got %v", err)
 		}
@@ -152,7 +151,6 @@ func TestFetcher_FetchAll(t *testing.T) {
 	t.Run("Empty URLs", func(t *testing.T) {
 		fetcher := NewFetcher(FetchOptions{})
 		lines, err := fetcher.FetchAll(context.Background(), []string{})
-
 		if err != nil {
 			t.Fatalf("Expected no error, got %v", err)
 		}

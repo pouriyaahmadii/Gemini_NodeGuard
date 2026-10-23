@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"gemini-nodeguard/internal/registry"
 	"gemini-nodeguard/internal/types"
 )
 
@@ -33,7 +34,7 @@ func (d *customMockDialer) NewHTTPClient(ctx context.Context, node *types.ProxyN
 				targetURL = d.failURL
 			}
 
-			newReq, _ := http.NewRequestWithContext(ctx, req.Method, targetURL, req.Body)
+			newReq, _ := http.NewRequestWithContext(req.Context(), req.Method, targetURL, req.Body)
 			newReq.Header = req.Header
 			return http.DefaultTransport.RoundTrip(newReq)
 		}),
@@ -65,10 +66,17 @@ func TestChecker_CheckAll(t *testing.T) {
 		failURL:     failServer.URL,
 	}
 
+	// Add search service rules so that it evaluates correctly during the test
+	registry.GetServices()["search"].StatusRules = []registry.StatusRule{
+		{Status: []int{200}, Classification: types.ClassificationConfirmedCompatible},
+	}
 	checker := NewChecker(CheckOptions{
-		Concurrency: 2,
-		Timeout:     2 * time.Second,
-		Services:    []string{"search"},
+		Concurrency:         2,
+		ProcessStartTimeout: 5 * time.Second,
+		ProbeTimeout:        8 * time.Second,
+		NodeTimeout:         2 * time.Second,
+		ConfirmCount:        1,
+		Services:            []string{"search"},
 	}, dialer)
 
 	nodes := []*types.ProxyNode{
@@ -94,6 +102,9 @@ func TestChecker_CheckAll(t *testing.T) {
 	}
 
 	if compatibleCount != 3 {
+		for _, n := range result {
+			t.Logf("Node %s classification: %s, diag: %s, HTTP: %d", n.ID, n.ServiceResults["search"].Classification, n.ServiceResults["search"].Diagnostic, n.ServiceResults["search"].HTTPStatus)
+		}
 		t.Errorf("Expected 3 nodes to be compatible with search, got %d", compatibleCount)
 	}
 }
@@ -112,9 +123,12 @@ func TestChecker_ContextCancellation(t *testing.T) {
 	}
 
 	checker := NewChecker(CheckOptions{
-		Concurrency: 2,
-		Timeout:     5 * time.Second,
-		Services:    []string{"search"},
+		Concurrency:         2,
+		ProcessStartTimeout: 5 * time.Second,
+		ProbeTimeout:        8 * time.Second,
+		NodeTimeout:         5 * time.Second,
+		ConfirmCount:        1,
+		Services:            []string{"search"},
 	}, dialer)
 
 	nodes := []*types.ProxyNode{

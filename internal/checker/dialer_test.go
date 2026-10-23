@@ -2,9 +2,10 @@ package checker
 
 import (
 	"context"
-	"gemini-nodeguard/internal/types"
 	"net/http"
 	"testing"
+
+	"gemini-nodeguard/internal/types"
 )
 
 func TestMockDialer(t *testing.T) {

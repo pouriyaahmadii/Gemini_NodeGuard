@@ -19,21 +19,26 @@ import (
 	"gemini-nodeguard/internal/exporter"
 	"gemini-nodeguard/internal/fetcher"
 	"gemini-nodeguard/internal/parser"
+	"gemini-nodeguard/internal/pipeline"
 	"gemini-nodeguard/internal/registry"
 	"gemini-nodeguard/internal/types"
+	"gemini-nodeguard/internal/version"
 )
 
 func main() {
 	var (
-		configPath  string
-		subURLs     string
-		servicesStr string
-		outputDir   string
-		concurrency int
-		timeoutStr  string
-		singboxPath string
-		xrayPath    string
-		silent      bool
+		printCoreVersions bool
+		versionFlag       bool
+		isSelftest        bool
+		configPath        string
+		subURLs           string
+		servicesStr       string
+		outputDir         string
+		concurrency       int
+		timeoutStr        string
+		singboxPath       string
+		xrayPath          string
+		silent            bool
 	)
 
 	flag.StringVar(&configPath, "config", "", "Path to config JSON file")
@@ -46,7 +51,24 @@ func main() {
 	flag.StringVar(&xrayPath, "xray", "", "Path to xray binary")
 	flag.BoolVar(&silent, "silent", false, "Suppress banner and print only essential logs")
 	flag.BoolVar(&silent, "quiet", false, "Suppress banner and print only essential logs (alias for -silent)")
+	flag.BoolVar(&isSelftest, "selftest", false, "Run hidden E2E selftest logic")
+	flag.BoolVar(&versionFlag, "version", false, "Print version and exit")
+	flag.BoolVar(&printCoreVersions, "print-core-versions", false, "Print embedded core binary versions and exit")
 	flag.Parse()
+
+	if printCoreVersions {
+		checker.PrintCoreVersions()
+		os.Exit(0)
+	}
+
+	if versionFlag {
+		fmt.Printf("nodeguard version %s\n", version.Version)
+		os.Exit(0)
+	}
+
+	if isSelftest {
+		os.Exit(pipeline.RunSelftest())
+	}
 
 	// Print banner unless silent flag is true
 	if !silent {
@@ -153,12 +175,15 @@ func main() {
 	// 3. Check Nodes
 	log.Println("Checking node connectivity...")
 	checkOpts := checker.CheckOptions{
-		Concurrency: cfg.Concurrency,
-		Timeout:     cfg.Timeout,
-		Services:    cfg.Services,
+		Concurrency:         cfg.Concurrency,
+		ProcessStartTimeout: 5 * time.Second,
+		ProbeTimeout:        8 * time.Second,
+		NodeTimeout:         cfg.Timeout,
+		ConfirmCount:        1,
+		Services:            cfg.Services,
 	}
 
-	resolvedSingboxPath, err := checker.ResolveSingbox(cfg.SingboxPath)
+	resolvedSingboxPath, err := checker.ResolveSingbox(ctx, cfg.SingboxPath)
 	if err != nil {
 		log.Printf("Warning: Failed to resolve sing-box binary: %v", err)
 	}
@@ -173,7 +198,7 @@ func main() {
 		dialers = append(dialers, singboxDialer)
 	}
 
-	resolvedXrayPath, err := checker.ResolveXray(cfg.XrayPath)
+	resolvedXrayPath, err := checker.ResolveXray(ctx, cfg.XrayPath)
 	if err != nil {
 		log.Printf("Warning: Failed to resolve xray binary: %v", err)
 	}
@@ -183,6 +208,10 @@ func main() {
 		log.Printf("Warning: Failed to initialize xray dialer: %v", err)
 	} else {
 		dialers = append(dialers, xrayDialer)
+	}
+
+	if len(dialers) == 0 {
+		log.Fatal("no proxy core available: install sing-box/xray or set -singbox/-xray")
 	}
 
 	c := checker.NewChecker(checkOpts, dialers...)
@@ -222,7 +251,7 @@ func main() {
 	}
 
 	// Create output directory
-	if err := os.MkdirAll(cfg.OutputDir, 0700); err != nil {
+	if err := os.MkdirAll(cfg.OutputDir, 0o700); err != nil {
 		log.Fatalf("Failed to create output directory %q: %v", cfg.OutputDir, err)
 	}
 
@@ -236,6 +265,7 @@ func main() {
 			opts := exporter.ExportOptions{
 				RemarkPrefix:   fmt.Sprintf("[%s]", def.Name),
 				IncludeLatency: true,
+				ServiceID:      svcID,
 			}
 			plainText := exporter.ExportPlain(sNodes, opts)
 			outPath := filepath.Join(cfg.OutputDir, fmt.Sprintf("%s-sub.txt", svcID))

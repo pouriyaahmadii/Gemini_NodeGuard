@@ -16,6 +16,7 @@ import (
 type ExportOptions struct {
 	RemarkPrefix   string
 	IncludeLatency bool
+	ServiceID      string
 }
 
 // formatRemark returns the formatted remark for a node.
@@ -27,8 +28,16 @@ func formatRemark(node *types.ProxyNode, opts ExportOptions) string {
 		prefix = "[Gemini]"
 	}
 
-	if opts.IncludeLatency && node.Latency > 0 {
-		return fmt.Sprintf("%s[%dms] %s", prefix, node.Latency.Milliseconds(), originalRemark)
+	if opts.IncludeLatency {
+		latency := node.Latency
+		if opts.ServiceID != "" {
+			if res, ok := node.ServiceResults[opts.ServiceID]; ok {
+				latency = res.Latency
+			}
+		}
+		if latency > 0 {
+			return fmt.Sprintf("%s[%dms] %s", prefix, latency.Milliseconds(), originalRemark)
+		}
 	}
 	return fmt.Sprintf("%s %s", prefix, originalRemark)
 }
@@ -46,6 +55,15 @@ func ReconstructShadowsocks(node *types.ProxyNode, remark string) string {
 		Scheme: "ss",
 		User:   url.User(b64Cred),
 		Host:   fmt.Sprintf("%s:%d", node.Server, node.Port),
+	}
+	if node.Plugin != "" {
+		q := u.Query()
+		pluginVal := node.Plugin
+		if node.PluginOpts != "" {
+			pluginVal += ";" + node.PluginOpts
+		}
+		q.Set("plugin", pluginVal)
+		u.RawQuery = q.Encode()
 	}
 
 	baseStr := u.String()
@@ -67,7 +85,7 @@ func ReconstructVMess(node *types.ProxyNode, remark string) (string, error) {
 		"aid":  node.AlterID,
 		"scy":  node.Cipher,
 		"net":  string(node.Transport.Type),
-		"type": "none",
+		"type": node.Transport.ObfsType,
 		"host": node.Transport.Host,
 		"path": node.Transport.Path,
 		"tls":  "none",
@@ -78,6 +96,9 @@ func ReconstructVMess(node *types.ProxyNode, remark string) (string, error) {
 
 	if v["scy"] == "" {
 		v["scy"] = "auto"
+	}
+	if v["type"] == "" {
+		v["type"] = "none"
 	}
 
 	if node.TLS.Enabled || node.Security == types.SecurityTLS {
@@ -142,6 +163,15 @@ func ReconstructStandard(node *types.ProxyNode, remark string) string {
 	if node.Transport.ServiceName != "" {
 		q.Set("serviceName", node.Transport.ServiceName)
 	}
+	if node.Transport.MaxEarlyData > 0 {
+		q.Set("ed", fmt.Sprintf("%d", node.Transport.MaxEarlyData))
+	}
+	if node.Transport.ObfsType != "" {
+		q.Set("obfs", node.Transport.ObfsType)
+	}
+	if node.Transport.ObfsPassword != "" {
+		q.Set("obfs-password", node.Transport.ObfsPassword)
+	}
 
 	if node.Flow != "" {
 		q.Set("flow", node.Flow)
@@ -170,7 +200,7 @@ func ReconstructURI(node *types.ProxyNode, opts ExportOptions) (string, error) {
 	switch node.Protocol {
 	case types.ProtocolVmess:
 		return ReconstructVMess(node, remark)
-	case types.ProtocolVless, types.ProtocolTrojan:
+	case types.ProtocolVless, types.ProtocolTrojan, types.ProtocolHysteria2:
 		return ReconstructStandard(node, remark), nil
 	case types.ProtocolShadowsocks:
 		return ReconstructShadowsocks(node, remark), nil
@@ -205,10 +235,10 @@ func ExportBase64(nodes []*types.ProxyNode, opts ExportOptions) (string, error) 
 // WriteToFile writes the output to disk, automatically creating any missing parent directories.
 func WriteToFile(filePath string, content string) error {
 	dir := filepath.Dir(filePath)
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return fmt.Errorf("failed to create directory: %w", err)
 	}
-	if err := os.WriteFile(filePath, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(filePath, []byte(content), 0o644); err != nil {
 		return fmt.Errorf("failed to write file: %w", err)
 	}
 	return nil

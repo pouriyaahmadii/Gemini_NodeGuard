@@ -103,13 +103,10 @@ func parseVMess(rawURI string) (*types.ProxyNode, error) {
 	node.Transport.Host = v.Host
 	node.Transport.Path = v.Path
 
-	if v.Type != "" && v.Type != "none" && node.Transport.Type == types.TransportTCP {
-		// Handle vmess HTTP obfs via type field
-		// Often type="http" implies an HTTP header, but sometimes it just represents general obfuscation.
-		// Usually we map headers if we parse the full config, but for standard simplified vmess JSON,
-		// type="http" under net="tcp" means TCP with HTTP obfuscation.
-		// types.TransportConfig doesn't have a direct field for tcp type, but we can set it if needed.
-		// For now, mapping v.Type is typically not directly in types.TransportConfig unless we add Obfs field.
+	if v.Type != "" && v.Type != "none" {
+		if node.Transport.Type == types.TransportTCP {
+			node.Transport.ObfsType = v.Type
+		}
 	}
 
 	if v.TLS == "tls" {

@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"archive/zip"
 	"compress/gzip"
+	"context"
 	"fmt"
 	"io"
 	"log"
@@ -17,7 +18,7 @@ import (
 const DefaultSingboxVersion = "1.10.7"
 
 // ResolveSingbox resolves the path to the sing-box binary, downloading it if necessary.
-func ResolveSingbox(customPath string) (string, error) {
+func ResolveSingbox(ctx context.Context, customPath string) (string, error) {
 	// 1. Custom flag path
 	if customPath != "" {
 		if _, err := os.Stat(customPath); err == nil {
@@ -52,7 +53,7 @@ func ResolveSingbox(customPath string) (string, error) {
 	// 4. Auto-download to the local cache
 	log.Printf("sing-box not found. Downloading for %s/%s...", runtime.GOOS, runtime.GOARCH)
 
-	if err := os.MkdirAll(cacheDir, 0755); err != nil {
+	if err := os.MkdirAll(cacheDir, 0o755); err != nil {
 		return "", fmt.Errorf("failed to create cache directory: %w", err)
 	}
 
@@ -65,7 +66,7 @@ func ResolveSingbox(customPath string) (string, error) {
 }
 
 // ResolveXray resolves the path to the xray binary, downloading it if necessary.
-func ResolveXray(customPath string) (string, error) {
+func ResolveXray(ctx context.Context, customPath string) (string, error) {
 	// 1. Custom flag path
 	if customPath != "" {
 		if _, err := os.Stat(customPath); err == nil {
@@ -100,7 +101,7 @@ func ResolveXray(customPath string) (string, error) {
 	// 4. Auto-download to the local cache
 	log.Printf("xray not found. Downloading for %s/%s...", runtime.GOOS, runtime.GOARCH)
 
-	if err := os.MkdirAll(cacheDir, 0755); err != nil {
+	if err := os.MkdirAll(cacheDir, 0o755); err != nil {
 		return "", fmt.Errorf("failed to create cache directory: %w", err)
 	}
 
@@ -189,7 +190,7 @@ func downloadXray(destPath, version, goos, goarch string) error {
 
 	// Ensure executable permissions on Unix-like systems
 	if goos != "windows" {
-		if err := os.Chmod(destPath, 0755); err != nil {
+		if err := os.Chmod(destPath, 0o755); err != nil {
 			return fmt.Errorf("failed to set executable permissions: %w", err)
 		}
 	}
@@ -264,7 +265,7 @@ func downloadSingbox(destPath, version, goos, goarch string) error {
 
 	// Ensure executable permissions on Unix-like systems
 	if goos != "windows" {
-		if err := os.Chmod(destPath, 0755); err != nil {
+		if err := os.Chmod(destPath, 0o755); err != nil {
 			return fmt.Errorf("failed to set executable permissions: %w", err)
 		}
 	}
@@ -342,4 +343,14 @@ func extractTarGz(archivePath, destPath, targetFileName string) error {
 	}
 
 	return fmt.Errorf("%s not found in tar.gz archive", targetFileName)
+}
+
+func PrintCoreVersions() {
+	fmt.Printf("sing-box=%s\n", coreVersions["sing-box"])
+	fmt.Printf("xray=%s\n", coreVersions["xray"])
+}
+
+var coreVersions = map[string]string{
+	"sing-box": "1.10.7",
+	"xray":     "1.8.24",
 }
