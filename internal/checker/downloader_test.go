@@ -133,7 +133,7 @@ func TestExtractTarGz(t *testing.T) {
 
 	hdr := &tar.Header{
 		Name: "sing-box-1.10.7-linux-amd64/sing-box",
-		Mode: 0755,
+		Mode: 0o755,
 		Size: int64(len("dummy content")),
 	}
 	if err := tw.WriteHeader(hdr); err != nil {

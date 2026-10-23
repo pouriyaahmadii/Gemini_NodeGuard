@@ -2,6 +2,7 @@ package checker
 
 import (
 	"fmt"
+
 	"gemini-nodeguard/internal/types"
 )
 
@@ -77,10 +78,41 @@ func BuildSingboxOutbound(node *types.ProxyNode) (map[string]any, error) {
 		out["tls"] = tlsConfig
 	}
 
+	if node.Transport.Type == types.TransportTCP && node.Transport.ObfsType == "http" {
+		out["transport"] = map[string]any{
+			"type": "http",
+			"path": node.Transport.Path,
+		}
+		if node.Transport.Host != "" {
+			out["transport"].(map[string]any)["headers"] = map[string]string{
+				"Host": node.Transport.Host,
+			}
+		}
+	}
+
+	if node.Protocol == types.ProtocolHysteria2 {
+		out["type"] = "hysteria2"
+		out["password"] = node.UUID
+		if node.Transport.ObfsType != "" {
+			out["obfs"] = map[string]any{
+				"type":     node.Transport.ObfsType,
+				"password": node.Transport.ObfsPassword,
+			}
+		}
+	}
+
+	if node.Plugin != "" {
+		return nil, fmt.Errorf("sing-box does not natively support shadowsocks plugins (got %s)", node.Plugin)
+	}
+
 	// Transport configuration
 	if node.Transport.Type != "" && node.Transport.Type != types.TransportTCP {
+		tType := string(node.Transport.Type)
+		if tType == "h2" {
+			tType = "http"
+		}
 		transportConfig := map[string]any{
-			"type": string(node.Transport.Type),
+			"type": tType,
 		}
 		if node.Transport.Path != "" {
 			transportConfig["path"] = node.Transport.Path
@@ -102,6 +134,12 @@ func BuildSingboxOutbound(node *types.ProxyNode) (map[string]any, error) {
 			transportConfig["service_name"] = node.Transport.ServiceName
 		}
 
+		if node.Transport.MaxEarlyData > 0 {
+			transportConfig["max_early_data"] = node.Transport.MaxEarlyData
+			if node.Transport.EarlyDataHeaderName != "" {
+				transportConfig["early_data_header_name"] = node.Transport.EarlyDataHeaderName
+			}
+		}
 		out["transport"] = transportConfig
 	}
 
@@ -182,7 +220,8 @@ func BuildXrayOutbound(node *types.ProxyNode) (map[string]any, error) {
 
 	// Transport configuration
 	if node.Transport.Type != "" && node.Transport.Type != types.TransportTCP {
-		streamSettings["network"] = string(node.Transport.Type)
+		tType := string(node.Transport.Type)
+		streamSettings["network"] = tType
 
 		switch node.Transport.Type {
 		case types.TransportWS:
@@ -200,6 +239,12 @@ func BuildXrayOutbound(node *types.ProxyNode) (map[string]any, error) {
 				}
 				wsSettings["headers"] = headers
 			}
+			if node.Transport.MaxEarlyData > 0 {
+				wsSettings["maxEarlyData"] = node.Transport.MaxEarlyData
+				if node.Transport.EarlyDataHeaderName != "" {
+					wsSettings["earlyDataHeaderName"] = node.Transport.EarlyDataHeaderName
+				}
+			}
 			streamSettings["wsSettings"] = wsSettings
 
 		case types.TransportGRPC:
@@ -213,6 +258,29 @@ func BuildXrayOutbound(node *types.ProxyNode) (map[string]any, error) {
 		}
 	} else {
 		streamSettings["network"] = "tcp"
+	}
+
+	if node.Transport.Type == types.TransportTCP && node.Transport.ObfsType == "http" {
+		streamSettings["network"] = "tcp"
+		streamSettings["tcpSettings"] = map[string]any{
+			"header": map[string]any{
+				"type": "http",
+				"request": map[string]any{
+					"path": []string{node.Transport.Path},
+					"headers": map[string][]string{
+						"Host": {node.Transport.Host},
+					},
+				},
+			},
+		}
+	}
+
+	if node.Protocol == types.ProtocolHysteria2 {
+		return nil, fmt.Errorf("xray does not support hysteria2")
+	}
+
+	if node.Plugin != "" {
+		return nil, fmt.Errorf("xray unsupported shadowsocks plugin: %s", node.Plugin)
 	}
 
 	// TLS configuration

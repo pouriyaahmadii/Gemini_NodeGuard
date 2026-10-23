@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "services": [
+    {
+      "id": "gemini",
+      "name": "Google Gemini",
+      "endpoint": "https://gemini.google.com",
+      "method": "GET",
+      "requires_auth": true,
+      "follow_redirects": true,
+      "headers": {
+        "Accept-Language": "en-US"
+      },
+      "status_rules": [
+        {
+          "status": [200, 204],
+          "classification": "confirmed_compatible"
+        },
+        {
+          "status": [301, 302, 303, 307, 308],
+          "classification": "confirmed_compatible",
+          "url_contains_any": ["gemini.google.com"],
+          "url_not_contains_any": ["accounts.google.com", "sorry", "unsupported"]
+        },
+        {
+          "status": [301, 302, 303, 307, 308],
+          "classification": "authentication_required",
+          "url_contains_any": ["accounts.google.com"]
+        },
+        {
+          "status": [403],
+          "classification": "likely_region_restricted",
+          "body_contains_any": ["not supported in your country", "isn't currently supported in your country", "not yet available in your region"]
+        },
+        {
+          "status": [403],
+          "classification": "access_denied"
+        },
+        {
+          "status": [429],
+          "classification": "rate_limited"
+        },
+        {
+          "status": [500, 502, 503],
+          "classification": "service_error"
+        }
+      ]
+    }
+  ]
+}

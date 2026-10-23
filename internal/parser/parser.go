@@ -27,6 +27,9 @@ func ParseURI(rawURI string) (*types.ProxyNode, error) {
 	if strings.HasPrefix(rawURI, "ss://") {
 		return parseShadowsocks(rawURI)
 	}
+	if strings.HasPrefix(rawURI, "hysteria2://") || strings.HasPrefix(rawURI, "hy2://") {
+		return parseHysteria2(rawURI)
+	}
 
 	return nil, fmt.Errorf("unsupported protocol scheme for URI: %s", rawURI)
 }

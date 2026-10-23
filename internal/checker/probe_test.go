@@ -90,12 +90,12 @@ func TestProbe(t *testing.T) {
 			// Update the endpoint of the service definition to our local test server URL
 			def := svcReg[tt.serviceID]
 			testDef := &registry.ServiceDefinition{
-				ID:               def.ID,
-				Name:             def.Name,
-				Endpoint:         server.URL,
-				Method:           def.Method,
-				RequiresAuth:     def.RequiresAuth,
-				EvaluateResponse: def.EvaluateResponse,
+				ID:           def.ID,
+				Name:         def.Name,
+				Endpoint:     server.URL,
+				Method:       def.Method,
+				RequiresAuth: def.RequiresAuth,
+				StatusRules:  def.StatusRules,
 			}
 
 			result := Probe(ctx, client, node, testDef)
@@ -114,10 +114,10 @@ func TestProbeTransportError(t *testing.T) {
 
 	// Use an unroutable address that will timeout/fail instantly in our tight context
 	testDef := &registry.ServiceDefinition{
-		ID:               "timeout_test",
-		Endpoint:         "http://192.0.2.1", // TEST-NET-1 (unroutable)
-		Method:           "GET",
-		EvaluateResponse: func(resp *http.Response, body []byte) types.Classification { return types.ClassificationInconclusive },
+		ID:          "timeout_test",
+		Endpoint:    "http://192.0.2.1", // TEST-NET-1 (unroutable)
+		Method:      "GET",
+		StatusRules: []registry.StatusRule{},
 	}
 
 	// Allow enough time for context to expire so HTTP transport immediately fails

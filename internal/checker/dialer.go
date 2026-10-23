@@ -1,6 +1,7 @@
 package checker
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -19,12 +20,12 @@ type NodeDialer interface {
 	NewHTTPClient(ctx context.Context, node *types.ProxyNode) (client *http.Client, cleanup func(), err error)
 }
 
-// SingboxBinaryDialer uses the local sing-box binary to dial through nodes.
+// ... Singbox Binary Dialer ...
+
 type SingboxBinaryDialer struct {
 	binaryPath string
 }
 
-// NewSingboxBinaryDialer creates a new SingboxBinaryDialer.
 func NewSingboxBinaryDialer(binaryPath string) (*SingboxBinaryDialer, error) {
 	if binaryPath == "" {
 		binaryPath = "sing-box"
@@ -36,25 +37,22 @@ func NewSingboxBinaryDialer(binaryPath string) (*SingboxBinaryDialer, error) {
 	return &SingboxBinaryDialer{binaryPath: path}, nil
 }
 
-// NewHTTPClient creates a new HTTP client routed through a sing-box instance.
 func (d *SingboxBinaryDialer) NewHTTPClient(ctx context.Context, node *types.ProxyNode) (*http.Client, func(), error) {
 	outbound, err := BuildSingboxOutbound(node)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to build sing-box outbound: %w", err)
 	}
 
-	// 1. Get a free local port
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to allocate local port: %w", err)
 	}
 	port := listener.Addr().(*net.TCPAddr).Port
-	listener.Close() // Close immediately, sing-box will bind to it
+	listener.Close()
 
-	// 2. Write minimal sing-box config
 	config := map[string]any{
 		"log": map[string]any{
-			"level": "panic", // Keep it quiet
+			"level": "error",
 		},
 		"inbounds": []map[string]any{
 			{
@@ -82,17 +80,19 @@ func (d *SingboxBinaryDialer) NewHTTPClient(ctx context.Context, node *types.Pro
 	}
 	configFile.Close()
 
-	// 3. Start sing-box process
 	cmd := exec.CommandContext(ctx, d.binaryPath, "run", "-c", configFilePath)
+
+	var stderrBuf bytes.Buffer
+	cmd.Stderr = &stderrBuf
 
 	if err := cmd.Start(); err != nil {
 		os.Remove(configFilePath)
 		return nil, nil, fmt.Errorf("failed to start sing-box process: %w", err)
 	}
 
-	// Prevent zombie process leak
+	cmdDone := make(chan error, 1)
 	go func() {
-		_ = cmd.Wait()
+		cmdDone <- cmd.Wait()
 	}()
 
 	cleanup := func() {
@@ -102,12 +102,7 @@ func (d *SingboxBinaryDialer) NewHTTPClient(ctx context.Context, node *types.Pro
 		os.Remove(configFilePath)
 	}
 
-	// 4. Readiness check loop
-	ready := false
 	socksAddr := fmt.Sprintf("127.0.0.1:%d", port)
-
-	// Polling loop to wait until sing-box binds the SOCKS port
-	timeout := time.After(2 * time.Second)
 	ticker := time.NewTicker(50 * time.Millisecond)
 	defer ticker.Stop()
 
@@ -116,22 +111,24 @@ func (d *SingboxBinaryDialer) NewHTTPClient(ctx context.Context, node *types.Pro
 		case <-ctx.Done():
 			cleanup()
 			return nil, nil, ctx.Err()
-		case <-timeout:
+		case err := <-cmdDone:
 			cleanup()
-			return nil, nil, fmt.Errorf("sing-box process readiness timeout")
+			// Extract last 1KB of stderr for error message
+			errStr := stderrBuf.String()
+			if len(errStr) > 1024 {
+				errStr = errStr[len(errStr)-1024:]
+			}
+			return nil, nil, fmt.Errorf("sing-box process exited unexpectedly: %v (stderr: %s)", err, errStr)
 		case <-ticker.C:
 			conn, err := net.DialTimeout("tcp", socksAddr, 50*time.Millisecond)
 			if err == nil {
 				conn.Close()
-				ready = true
+				goto Ready
 			}
-		}
-		if ready {
-			break
 		}
 	}
 
-	// 5. Create HTTP Client using SOCKS5 proxy
+Ready:
 	proxyURL, err := url.Parse(fmt.Sprintf("socks5://%s", socksAddr))
 	if err != nil {
 		cleanup()
@@ -145,19 +142,19 @@ func (d *SingboxBinaryDialer) NewHTTPClient(ctx context.Context, node *types.Pro
 			ResponseHeaderTimeout: 6 * time.Second,
 		},
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			return http.ErrUseLastResponse
+			return http.ErrUseLastResponse // Important: Probe will handle redirects
 		},
 	}
 
 	return client, cleanup, nil
 }
 
-// XrayBinaryDialer uses the local xray binary to dial through nodes.
+// ... Xray Binary Dialer ...
+
 type XrayBinaryDialer struct {
 	binaryPath string
 }
 
-// NewXrayBinaryDialer creates a new XrayBinaryDialer.
 func NewXrayBinaryDialer(binaryPath string) (*XrayBinaryDialer, error) {
 	if binaryPath == "" {
 		binaryPath = "xray"
@@ -169,25 +166,22 @@ func NewXrayBinaryDialer(binaryPath string) (*XrayBinaryDialer, error) {
 	return &XrayBinaryDialer{binaryPath: path}, nil
 }
 
-// NewHTTPClient creates a new HTTP client routed through an xray instance.
 func (d *XrayBinaryDialer) NewHTTPClient(ctx context.Context, node *types.ProxyNode) (*http.Client, func(), error) {
 	outbound, err := BuildXrayOutbound(node)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to build xray outbound: %w", err)
 	}
 
-	// 1. Get a free local port
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to allocate local port: %w", err)
 	}
 	port := listener.Addr().(*net.TCPAddr).Port
-	listener.Close() // Close immediately, xray will bind to it
+	listener.Close()
 
-	// 2. Write minimal xray config
 	config := map[string]any{
 		"log": map[string]any{
-			"loglevel": "none",
+			"loglevel": "error",
 		},
 		"inbounds": []map[string]any{
 			{
@@ -218,17 +212,19 @@ func (d *XrayBinaryDialer) NewHTTPClient(ctx context.Context, node *types.ProxyN
 	}
 	configFile.Close()
 
-	// 3. Start xray process
 	cmd := exec.CommandContext(ctx, d.binaryPath, "run", "-c", configFilePath)
+
+	var stderrBuf bytes.Buffer
+	cmd.Stderr = &stderrBuf
 
 	if err := cmd.Start(); err != nil {
 		os.Remove(configFilePath)
 		return nil, nil, fmt.Errorf("failed to start xray process: %w", err)
 	}
 
-	// Prevent zombie process leak
+	cmdDone := make(chan error, 1)
 	go func() {
-		_ = cmd.Wait()
+		cmdDone <- cmd.Wait()
 	}()
 
 	cleanup := func() {
@@ -238,12 +234,7 @@ func (d *XrayBinaryDialer) NewHTTPClient(ctx context.Context, node *types.ProxyN
 		os.Remove(configFilePath)
 	}
 
-	// 4. Readiness check loop
-	ready := false
 	socksAddr := fmt.Sprintf("127.0.0.1:%d", port)
-
-	// Polling loop to wait until xray binds the SOCKS port
-	timeout := time.After(2 * time.Second)
 	ticker := time.NewTicker(50 * time.Millisecond)
 	defer ticker.Stop()
 
@@ -252,22 +243,23 @@ func (d *XrayBinaryDialer) NewHTTPClient(ctx context.Context, node *types.ProxyN
 		case <-ctx.Done():
 			cleanup()
 			return nil, nil, ctx.Err()
-		case <-timeout:
+		case err := <-cmdDone:
 			cleanup()
-			return nil, nil, fmt.Errorf("xray process readiness timeout")
+			errStr := stderrBuf.String()
+			if len(errStr) > 1024 {
+				errStr = errStr[len(errStr)-1024:]
+			}
+			return nil, nil, fmt.Errorf("xray process exited unexpectedly: %v (stderr: %s)", err, errStr)
 		case <-ticker.C:
 			conn, err := net.DialTimeout("tcp", socksAddr, 50*time.Millisecond)
 			if err == nil {
 				conn.Close()
-				ready = true
+				goto Ready
 			}
-		}
-		if ready {
-			break
 		}
 	}
 
-	// 5. Create HTTP Client using SOCKS5 proxy
+Ready:
 	proxyURL, err := url.Parse(fmt.Sprintf("socks5://%s", socksAddr))
 	if err != nil {
 		cleanup()
@@ -293,7 +285,6 @@ type MockDialer struct {
 	Client *http.Client
 }
 
-// NewHTTPClient returns the mocked client.
 func (d *MockDialer) NewHTTPClient(ctx context.Context, node *types.ProxyNode) (*http.Client, func(), error) {
 	if d.Client == nil {
 		client := &http.Client{
@@ -303,7 +294,6 @@ func (d *MockDialer) NewHTTPClient(ctx context.Context, node *types.ProxyNode) (
 		}
 		return client, func() {}, nil
 	}
-	// Make sure the mock client also stops on redirects if needed
 	if d.Client.CheckRedirect == nil {
 		d.Client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse

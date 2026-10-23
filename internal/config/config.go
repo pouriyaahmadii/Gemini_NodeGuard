@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -37,9 +38,19 @@ func DefaultConfig() *Config {
 // LoadConfig loads the configuration from a JSON file.
 // If the file does not exist, it falls back to defaults.
 func LoadConfig(path string) (*Config, error) {
+	envSub := os.Getenv("NG_SUB_URLS")
 	cfg := DefaultConfig()
 
 	if path == "" {
+		if envSub != "" {
+			urls := strings.Split(envSub, ",")
+			for _, u := range urls {
+				u = strings.TrimSpace(u)
+				if u != "" {
+					cfg.SubURLs = append(cfg.SubURLs, u)
+				}
+			}
+		}
 		return cfg, nil
 	}
 
@@ -64,5 +75,14 @@ func LoadConfig(path string) (*Config, error) {
 		cfg.Timeout = parsedTimeout
 	}
 
+	if envSub != "" {
+		urls := strings.Split(envSub, ",")
+		for _, u := range urls {
+			u = strings.TrimSpace(u)
+			if u != "" {
+				cfg.SubURLs = append(cfg.SubURLs, u)
+			}
+		}
+	}
 	return cfg, nil
 }

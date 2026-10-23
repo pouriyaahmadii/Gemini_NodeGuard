@@ -1,9 +1,10 @@
 package checker
 
 import (
-	"gemini-nodeguard/internal/types"
 	"reflect"
 	"testing"
+
+	"gemini-nodeguard/internal/types"
 )
 
 func TestBuildSingboxOutbound(t *testing.T) {

@@ -60,11 +60,15 @@ type RealityConfig struct {
 
 // TransportConfig holds transport layer settings.
 type TransportConfig struct {
-	Type        TransportType     `json:"type"`
-	Host        string            `json:"host,omitempty"`
-	Path        string            `json:"path,omitempty"`
-	ServiceName string            `json:"service_name,omitempty"` // For gRPC
-	Headers     map[string]string `json:"headers,omitempty"`
+	Type                TransportType     `json:"type"`
+	Host                string            `json:"host,omitempty"`
+	Path                string            `json:"path,omitempty"`
+	ServiceName         string            `json:"service_name,omitempty"` // For gRPC
+	Headers             map[string]string `json:"headers,omitempty"`
+	MaxEarlyData        int               `json:"max_early_data,omitempty"`
+	EarlyDataHeaderName string            `json:"early_data_header_name,omitempty"`
+	ObfsType            string            `json:"obfs_type,omitempty"`
+	ObfsPassword        string            `json:"obfs_password,omitempty"`
 }
 
 // ProxyNode represents a generic proxy node with standard configuration.
@@ -82,6 +86,8 @@ type ProxyNode struct {
 	TLS            TLSConfig                `json:"tls,omitempty"`
 	Reality        RealityConfig            `json:"reality,omitempty"`
 	Transport      TransportConfig          `json:"transport,omitempty"`
+	Plugin         string                   `json:"plugin,omitempty"`
+	PluginOpts     string                   `json:"plugin_opts,omitempty"`
 	RawURI         string                   `json:"raw_uri"`
 	IsAlive        bool                     `json:"is_alive"`
 	ServiceResults map[string]ServiceResult `json:"service_results"`
@@ -158,16 +164,43 @@ func (n *ProxyNode) Validate() error {
 func (n *ProxyNode) DedupKey() string {
 	q := url.Values{}
 	if n.UUID != "" {
-		q.Set("id", n.UUID)
+		q.Set("uuid", n.UUID)
+	}
+	if n.Cipher != "" {
+		q.Set("cipher", n.Cipher)
+	}
+	if n.Flow != "" {
+		q.Set("flow", n.Flow)
+	}
+	if string(n.Security) != "" {
+		q.Set("security", string(n.Security))
 	}
 	if n.TLS.ServerName != "" {
 		q.Set("sni", n.TLS.ServerName)
 	}
-	if n.Transport.Path != "" {
-		q.Set("path", n.Transport.Path)
+	if n.Reality.PublicKey != "" {
+		q.Set("pbk", n.Reality.PublicKey)
+	}
+	if n.Reality.ShortID != "" {
+		q.Set("sid", n.Reality.ShortID)
 	}
 	if n.Transport.Type != "" {
 		q.Set("type", string(n.Transport.Type))
+	}
+	if n.Transport.Host != "" {
+		q.Set("host", n.Transport.Host)
+	}
+	if n.Transport.Path != "" {
+		q.Set("path", n.Transport.Path)
+	}
+	if n.Transport.ServiceName != "" {
+		q.Set("serviceName", n.Transport.ServiceName)
+	}
+	if n.Transport.ObfsType != "" {
+		q.Set("obfs", n.Transport.ObfsType)
+	}
+	if n.Plugin != "" {
+		q.Set("plugin", n.Plugin)
 	}
 
 	queryString := q.Encode()
